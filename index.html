@@ -2,27 +2,30 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#2E2419">
   <title>Tanja Wissel · App</title>
-  <link rel="stylesheet" href="prototyp/fonts/fonts.css">
-  <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #FAF7F2; color: #2C2418;
-           font-family: 'Lato', system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 24px 16px; box-sizing: border-box; }
-    main { max-width: 420px; text-align: center; }
-    h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 2.2rem; margin: 0 0 .4em; }
-    p { line-height: 1.55; color: #766351; }
-    a.btn { display: inline-block; margin-top: 1em; padding: .8em 1.4em; border-radius: 14px; background: #C2714F; color: #fff; text-decoration: none; }
-    a.btn:hover { background: #A85B3C; }
-    small { display: block; margin-top: 2em; color: #766351; }
-  </style>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23C2714F%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="app/styles.css">
 </head>
 <body>
-  <main>
-    <h1>Tanja Wissel</h1>
-    <p>Hier entsteht die App für das Superpatch-Team. Der Login kommt bald.</p>
-    <a class="btn" href="prototyp/">Prototyp ansehen</a>
-    <small>Der Prototyp speichert nur in deinem Browser. Die Kontakte darin sind erfunden.</small>
+  <header class="topbar">
+    <div class="brand">TANJA WISSEL <span>· App</span></div>
+    <span class="proto-badge">Testphase</span>
+  </header>
+  <main class="wrap" id="app" aria-live="polite">
+    <p class="muted">Einen Moment …</p>
   </main>
+  <nav class="tabbar" id="tabbar" aria-label="Hauptnavigation" hidden>
+    <a href="#/heute" data-tab="heute"><span aria-hidden="true">☀</span>Heute</a>
+    <a href="#/team" data-tab="team"><span aria-hidden="true">🤝</span>Team</a>
+    <a href="#/profil" data-tab="profil"><span aria-hidden="true">👤</span>Profil</a>
+  </nav>
+  <noscript><p class="wrap">Bitte JavaScript einschalten, damit die App funktioniert.</p></noscript>
+  <script src="app/vendor/supabase-2.117.2.js"></script>
+  <script src="app/config.js"></script>
+  <script src="app/app.js"></script>
 </body>
 </html>
