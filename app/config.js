@@ -16,5 +16,5 @@ window.APP_CONFIG = {
   // Öffentlicher Web-Push-Schlüssel (VAPID). Der private Schlüssel liegt nur als Supabase-Secret vor.
   vapidPublicKey: 'BENGYYXuvxBwpcXuQzhdTtbzq8YOdCwBKlACwzvWpA8pG44TmvP3qf-_vsl1dF_wK9sBQZGUtXcwpQubBk2BAJ0',
   appUrl: 'https://app.tanjawissel.ch/',
-  academyUrl: 'https://academy.tanjawissel.ch',
+  academyUrl: 'https://academy.tanjawissel.ch/school/course/start',
 };
