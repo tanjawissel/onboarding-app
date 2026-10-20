@@ -383,8 +383,8 @@
         <div class="lock">🔒 Deine persönliche Einschätzung, nur für dich. Sie hilft dir, den richtigen Ton zu treffen, und ist kein Urteil über den Menschen.</div>
         ${editing && F.status === 'kunde' ? `<label class="check"><input type="checkbox" name="smartship" ${F.smartship ? 'checked' : ''}><span>SmartShip (Vorzugskunde)</span></label>` : ''}
         <label class="check"><input type="checkbox" name="business_offen" ${F.business_offen ? 'checked' : ''}><span>Offen für das Business-Thema<br><span class="muted small">Nur dann bietet der Entwurf es an, und auch dann nur, wenn du es dort auswählst.</span></span></label>
-        ${editing ? '' : `<label class="check"><input type="checkbox" name="einverstanden" ${F.einverstanden ? 'checked' : ''}><span>Der Kontakt ist einverstanden, dass ich ihn hier notiere.</span></label>`}
-        <p class="small muted">Bitte keine Gesundheitsangaben notieren.</p>
+        ${editing ? '' : `<label class="check"><input type="checkbox" name="einverstanden" ${F.einverstanden ? 'checked' : ''}><span>Der Kontakt weiß, dass ich ihn hier notiere, und ist damit einverstanden.</span></label>`}
+        <p class="small muted">Trag nur ein, was du für dein Gespräch brauchst. Keine Gesundheitsangaben (z. B. Beschwerden, für die jemand Patches ausprobiert), keine Infos über Dritte. Löschen kannst du den Kontakt jederzeit, dann ist alles dazu weg.</p>
         <p id="f-err" class="notice warm" hidden></p>
         <div class="actions split">
           ${editing ? '<button type="button" class="btn danger small" data-act="delete">Kontakt löschen</button>' : '<span></span>'}
@@ -464,7 +464,7 @@
           <select id="r-k" data-rec="kontakt_id"><option value="">– bitte wählen –</option><option value="__neu" ${REC.kontakt_id === '__neu' ? 'selected' : ''}>＋ neuer Kontakt</option>
             ${S.kontakte.slice().sort((a, b) => a.name.localeCompare(b.name)).map((x) => `<option value="${esc(x.id)}" ${REC.kontakt_id === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
           ${REC.kontakt_id === '__neu' ? `<label class="field" for="r-new">Name des neuen Kontakts</label><input type="text" id="r-new" data-rec="neuName" value="${esc(REC.neuName)}" maxlength="80">
-            <label class="check"><input type="checkbox" data-rec="einverstanden" ${REC.einverstanden ? 'checked' : ''}><span>Der Kontakt ist einverstanden, dass ich ihn hier notiere.</span></label>` : ''}`}
+            <label class="check"><input type="checkbox" data-rec="einverstanden" ${REC.einverstanden ? 'checked' : ''}><span>Der Kontakt weiß, dass ich ihn hier notiere, und ist damit einverstanden.</span></label>` : ''}`}
         <div class="row2">
           <div><label class="field" for="r-status">Status ändern?</label>
             <select id="r-status" data-rec="status">${C.STATUS.map((s) => `<option value="${s.key}" ${selStatus === s.key ? 'selected' : ''}>${s.icon} ${s.name}${s.key === curStatus ? ' (bleibt)' : ''}</option>`).join('')}</select></div>
@@ -756,7 +756,7 @@
     openModal(`
       <h2>Notiz zu ${esc(k.name)}</h2>
       <textarea id="m-note" maxlength="2000" placeholder="Was möchtest du dir merken?"></textarea>
-      <p class="small muted">Bitte keine Gesundheitsangaben notieren.</p>
+      <p class="small muted">Trag nur ein, was du für dein Gespräch brauchst. Keine Gesundheitsangaben (z. B. Beschwerden, für die jemand Patches ausprobiert), keine Infos über Dritte. Löschen kannst du den Kontakt jederzeit, dann ist alles dazu weg.</p>
       <div class="actions split"><button class="btn ghost" data-act="modal-close">Abbrechen</button><button class="btn" data-act="note-save">Speichern</button></div>`);
   }
 

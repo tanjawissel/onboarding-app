@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Impressum · Tanja Wissel App</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23C2714F%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="app/styles.css">
+</head>
+<body style="padding-bottom:0">
+  <header class="topbar">
+    <div class="brand">TANJA WISSEL <span>· App</span></div>
+  </header>
+  <main class="wrap">
+    <p><a class="back" href="./">← zur App</a></p>
+    <h1>Impressum</h1>
+
+    <h2>Anbieterin</h2>
+    <p>Tanja Wissel<br>Nedontos 132<br>24100 Kalamata<br>Griechenland</p>
+
+    <h2>Kontakt</h2>
+    <p>E-Mail: <a class="cloak" data-u="academy" data-d="tanjawissel.ch" href="#">E-Mail schreiben</a><noscript>academy (at) tanjawissel.ch</noscript><br>
+      Anfragen per Mail beantworte ich in der Regel innerhalb von zwei Werktagen.</p>
+
+    <h2>Verantwortlich für den Inhalt</h2>
+    <p>Tanja Wissel, Anschrift wie oben</p>
+
+    <h2>Hinweis</h2>
+    <p>Die App ist ein Arbeitswerkzeug für ein Team unabhängiger Superpatch-Partnerinnen und -Partner. Sie ist kein Angebot des Herstellers Super Patch. Zugang nur auf persönliche Einladung.</p>
+
+    <h2>Verbraucherstreitbeilegung</h2>
+    <p>Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+
+    <p class="muted small"><a href="datenschutz.html">Datenschutzerklärung</a> · Stand: Oktober 2026</p>
+  </main>
+  <script>
+    document.querySelectorAll('a.cloak').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        location.href = 'mailto:' + a.getAttribute('data-u') + String.fromCharCode(64) + a.getAttribute('data-d');
+      });
+    });
+  </script>
+</body>
+</html>

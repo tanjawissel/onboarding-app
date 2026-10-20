@@ -289,7 +289,7 @@
     T.openModal(`
       <h2>Erinnerungen aufs Handy</h2>
       <p>Die App schickt dir höchstens eine Erinnerung am Tag, zu deiner Uhrzeit und nur, wenn etwas ansteht. Als Sponsorin oder Sponsor bekommst du zusätzlich kurze Nachrichten, wenn deine direkten Partner einen Meilenstein schaffen, den sie mit dir teilen.</p>
-      <p>Damit das klappt, läuft die Nachricht über den Push-Dienst deines Browsers (bei iPhone Apple, bei Android Google, bei Firefox Mozilla). Der Inhalt ist verschlüsselt, der Dienst sieht nur, dass eine Nachricht an dein Gerät geht. Auf dem Sperrbildschirm stehen keine Namen deiner Kontakte.</p>
+      <p>Damit das klappt, läuft die Nachricht über den Push-Dienst deines Browsers (bei iPhone Apple, bei Android Google, bei Firefox Mozilla, bei Edge Microsoft). Der Inhalt ist verschlüsselt, der Dienst sieht nur, dass eine Nachricht an dein Gerät geht. Diese Dienste können ihren Sitz in den USA haben. Auf dem Sperrbildschirm stehen keine Namen deiner Kontakte.</p>
       <p>Du kannst Push jederzeit hier oder in den Einstellungen deines Handys ausschalten. Mehr dazu in der <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.</p>
       <label class="check"><input type="checkbox" id="er-ok" data-act="er-ok"><span>Einverstanden, schick mir Push-Nachrichten.</span></label>
       <div class="actions"><button type="button" class="btn" data-act="er-push-ja" disabled>Einschalten</button>

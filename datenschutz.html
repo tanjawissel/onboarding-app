@@ -8,46 +8,129 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23C2714F%22/%3E%3C/svg%3E">
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="app/styles.css">
+  <style>.rg{opacity:.75;font-size:.9em}</style>
 </head>
 <body style="padding-bottom:0">
   <header class="topbar">
     <div class="brand">TANJA WISSEL <span>· App</span></div>
-    <span class="proto-badge">Testphase</span>
   </header>
   <main class="wrap">
     <p><a class="back" href="./">← zur App</a></p>
-    <div class="eyebrow">Vorläufig · Testphase</div>
-    <h1>Datenschutzhinweise</h1>
-    <p class="notice warm">Diese Hinweise gelten für die Testphase mit einem kleinen Kernteam. Die vollständige Datenschutzerklärung folgt vor dem Start für alle.</p>
+    <h1>Datenschutzerklärung</h1>
+    <p>Diese Erklärung gilt für die App „Tanja Wissel“ unter app.tanjawissel.ch. Die App ist ein Arbeitswerkzeug für ein Team unabhängiger Superpatch-Partnerinnen und -Partner und nur mit persönlicher Einladung nutzbar. Für die Academy (academy.tanjawissel.ch, systeme.io) gilt deren eigene Datenschutzerklärung.</p>
+    <p class="notice warm"><strong>Kurz gesagt:</strong> Deine Daten siehst nur du. Deine Sponsorin oder dein Sponsor sieht nur, was du ausdrücklich freigibst, deine Kontakte nie. Ich verkaufe keine Daten, zeige keine Werbung und verwende keine Tracking-Cookies.</p>
 
-    <h2>Wer ist verantwortlich?</h2>
-    <p>ELEFTHERI LLC, vertreten durch Tanja Wissel (Managing Member)<br>1209 Mountain Road Pl NE, Ste N, 87110 Albuquerque, New Mexico, USA<br>„Tanja Wissel“ ist der Name der App. Kontakt: <a href="mailto:academy@tanjawissel.ch">academy@tanjawissel.ch</a></p>
+    <h2>1. Wer ist verantwortlich?</h2>
+    <p>Tanja Wissel<br>Nedontos 132<br>24100 Kalamata<br>Griechenland<br>
+      E-Mail: <a class="cloak" data-u="academy" data-d="tanjawissel.ch" href="#">E-Mail schreiben</a><noscript>academy (at) tanjawissel.ch</noscript></p>
+    <p>Eine Datenschutzbeauftragte ist nicht bestellt, weil das gesetzlich nicht vorgeschrieben ist.</p>
 
-    <h2>Was wird gespeichert?</h2>
+    <h2>2. Dein Zugang</h2>
+    <p>Wenn du eine Einladung annimmst, speichere ich deine E-Mail-Adresse, deinen Vornamen, wer dich eingeladen hat (deine Sponsorin oder deinen Sponsor), den verwendeten Einladungscode und wann du die Datenschutzerklärung bestätigt hast. Beim Anmelden bekommst du einen Code per Mail. Der Login-Dienst protokolliert Anmeldungen (Zeitpunkt, IP-Adresse) zur Sicherheit.</p>
+    <p class="rg">Zweck: Nutzung der App. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO; Protokolle: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren Betrieb).</p>
+
+    <h2>3. Was du in der App einträgst</h2>
     <ul>
-      <li>Dein Zugang: E-Mail-Adresse, Vorname, wer dich eingeladen hat, Zeitpunkt deiner Einwilligung.</li>
-      <li>Was du selbst im Profil einträgst (z. B. Superpatch-Link, Wochenziel).</li>
-      <li>Später: Ergebnis des Freiheits-Kompass (nie deine einzelnen Antworten), Wortstil-Steckbrief, Ziele, deine Kontakte und Notizen.</li>
+      <li><strong>Profil:</strong> Vorname, Superpatch-Link, Wochenziel, Begrüßungszeiten.</li>
+      <li><strong>Freiheits-Kompass:</strong> Deine einzelnen Antworten bleiben nur in deinem Browser und werden nie gespeichert oder verschickt. Gespeichert wird nur das Ergebnis (Typ, Zweittyp, Antriebe, Punkte je Typ), dein Rahmen und deine Ziele.</li>
+      <li><strong>Wortstil-Steckbrief:</strong> siehe Abschnitt 6.</li>
+      <li><strong>Kontakte, Notizen, Verlauf, Entwürfe, Tagesprioritäten:</strong> siehe Abschnitt 7.</li>
+      <li><strong>Erinnerungs-Einstellungen:</strong> Kanal, Uhrzeit, Ruhetage, Kalender Tag oder Woche, Freigabe von Meilensteinen.</li>
+    </ul>
+    <p>Das alles kannst nur du lesen. Das ist in der Datenbank technisch abgesichert (Zeilenschutz pro Person).</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO. Kompass und Ziele sind freiwillig.</p>
+
+    <h2>4. Was deine Sponsorin oder dein Sponsor sieht</h2>
+    <p>Deinen Vornamen und nur das, was du selbst freigibst: deine Ziele, die Führungshinweise und deinen Rahmen. Wenn du Meilensteine teilst (Profil › Erinnerungen › „Was du teilst“), bekommt sie oder er eine kurze Nachricht, z. B. wenn du den Kompass abgeschlossen hast. Der Meilenstein „Erste 3 Kontakte eingetragen“ verrät nur, dass es mindestens drei Kontakte gibt.</p>
+    <p>Nie sichtbar: dein Typ, deine Antriebe, dein Wortstil-Steckbrief, deine Kontakte, Notizen oder Zahlen daraus. Freigaben kannst du jederzeit zurücknehmen.</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung durch die Freigabe).</p>
+
+    <h2>5. Wo die Daten liegen: Supabase</h2>
+    <p>Datenbank, Login und Server-Funktionen laufen bei Supabase, Inc. Die Daten liegen in einem Rechenzentrum in Frankfurt am Main (EU). Server-Funktionen (z. B. der Mailversand) können kurzzeitig in einem anderen Rechenzentrum von Supabase laufen; gespeichert wird nur in Frankfurt. Supabase verarbeitet die Daten in meinem Auftrag (Vertrag nach Art. 28 DSGVO). Soweit Supabase Daten außerhalb der EU verarbeiten kann (z. B. im Support), gelten die Standardvertragsklauseln der EU-Kommission.</p>
+
+    <h2>6. Künstliche Intelligenz: Claude von Anthropic</h2>
+    <p>Nur wenn du es einschaltest:</p>
+    <ul>
+      <li><strong>Wortstil-Probe:</strong> Deine drei Schreibproben gehen zur Auswertung an Claude. Daraus entsteht dein Wortstil-Steckbrief, nur dieser wird in der App gespeichert. Die Proben selbst speichert die App nicht.</li>
+      <li><strong>Nachrichtenentwürfe im CRM:</strong> Es gehen dein Steckbrief, die Art der Nachricht, der geschätzte Typ des Kontakts und deine letzten drei Notizen zu diesem Kontakt an Claude. Den Vornamen des Kontakts ersetzt die App vorher durch „[Name]“. Andere Namen in deinen Notizen werden nicht erkannt; bitte schreib dort möglichst keine.</li>
+    </ul>
+    <p>Anbieter ist Anthropic (für Kunden in der EU Anthropic Ireland, Limited; die Verarbeitung findet auch in den USA statt). Anthropic verarbeitet die Daten in meinem Auftrag, nutzt sie nicht zum Training seiner Modelle und löscht Eingaben und Antworten nach spätestens 30 Tagen, außer bei Verdacht auf Missbrauch oder wenn das Gesetz es verlangt. Grundlage der Übermittlung in die USA sind die Standardvertragsklauseln der EU-Kommission im Auftragsverarbeitungsvertrag von Anthropic.</p>
+    <p>Die KI trifft keine Entscheidungen über dich. Sie macht Vorschläge, du entscheidest, was du damit tust. Die App verschickt nie selbst Nachrichten an deine Kontakte.</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Ausschalten jederzeit unter Profil › KI für Entwürfe.</p>
+
+    <h2>7. Deine Kontakte im CRM (Daten von Dritten)</h2>
+    <p>Im CRM trägst du Menschen ein, mit denen du sprichst: Name, wie ihr euch kennt, Kanal, optional Telefonnummer, Status, Notizen, Follow-up-Datum und einen geschätzten Typ. Diese Daten siehst nur du. Für diese Einträge bist du selbst mitverantwortlich. Darum gilt:</p>
+    <ul>
+      <li>Trag nur Menschen ein, die wissen, dass du sie notierst, und damit einverstanden sind. Die App fragt das bei jedem neuen Kontakt ab.</li>
+      <li>Trag nur ein, was du für das Gespräch brauchst. <strong>Keine Gesundheitsangaben</strong> und nichts über weitere Personen.</li>
+      <li>Wenn ein Kontakt das möchte, lösch ihn. Dann sind auch seine Notizen, sein Verlauf und seine Entwürfe weg.</li>
+    </ul>
+    <p>Die Vornamen fälliger Kontakte stehen in deiner täglichen Erinnerungsmail (wenn du sie eingestellt hast), nie in Push-Nachrichten oder im Kalender. Der geschätzte Typ ist nur für dich sichtbar.</p>
+    <p><strong>Wenn du als Kontakt hier eingetragen bist:</strong> Die Person, die dich notiert hat, kann dir sagen, was über dich gespeichert ist, und den Eintrag löschen. Du kannst dich auch direkt an mich wenden (Abschnitt 1).</p>
+    <p class="rg">Rechtsgrundlage für die Kontakte: Art. 6 Abs. 1 lit. a DSGVO (Einverständnis des Kontakts) und lit. f (berechtigtes Interesse an der Gesprächsvorbereitung); für dich als Nutzerin oder Nutzer: lit. b.</p>
+
+    <h2>8. E-Mails über Brevo</h2>
+    <p>Ich versende über Brevo (Sendinblue SAS, Paris, Frankreich; Server in der EU):</p>
+    <ul>
+      <li><strong>Login-Mails</strong> mit deinem Anmeldecode,</li>
+      <li><strong>tägliche Erinnerungsmails</strong>, wenn du den Kanal E-Mail gewählt hast: dein Vorname, die Vornamen fälliger Kontakte mit der Art (z. B. „Anna · Nachfassen“), deine drei Tagesschritte,</li>
+      <li><strong>Einladungsmails</strong> (Abschnitt 9).</li>
+    </ul>
+    <p>Brevo verarbeitet die Daten in meinem Auftrag (Vertrag nach Art. 28 DSGVO). <strong>Wichtig:</strong> Brevo ersetzt Links in den Mails durch eigene Weiterleitungs-Links und erfasst dabei, ob und wann ein Link angeklickt wurde. Das lässt sich in meinem Tarif nicht abschalten. Öffnungen werden nur anonym gezählt. Ich werte diese Daten nicht aus.</p>
+    <p class="rg">Rechtsgrundlage: Login und Erinnerung Art. 6 Abs. 1 lit. b DSGVO; Klickerfassung Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an zuverlässigem Mailversand).</p>
+
+    <h2>9. Einladung per Mail (Daten der eingeladenen Person)</h2>
+    <p>Wenn du jemanden über „Per Mail schicken“ einlädst, gibst du die Mailadresse dieser Person und optional eine persönliche Zeile ein. Die Adresse geht nur zum Versand an Brevo und wird in der App nicht gespeichert. In der Mail steht dein Vorname. Bitte lade nur Menschen ein, die mit einer Mail von dir rechnen. Höchstens 10 Einladungsmails pro Tag und Person.</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Einladung, die du selbst auslöst).</p>
+
+    <h2>10. Push-Nachrichten</h2>
+    <p>Nur wenn du Push einschaltest und zustimmst. Die Nachricht läuft über den Push-Dienst deines Browsers: Apple (Apple Push Notification service, iPhone und Safari), Google (Firebase Cloud Messaging, Chrome und Android), Mozilla (Firefox) oder Microsoft (Edge). Diese Dienste können ihren Sitz in den USA haben. Der Inhalt ist Ende-zu-Ende verschlüsselt; der Dienst sieht nur die Geräteadresse, Zeitpunkt und Größe der Nachricht. Ich speichere die Geräteadresse (Push-Abo) und den Zeitpunkt deiner Zustimmung. Auf dem Sperrbildschirm stehen nie Namen deiner Kontakte.</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG (Einwilligung). Ausschalten jederzeit unter Profil › Erinnerungen oder in den Einstellungen deines Geräts; dann wird das Push-Abo gelöscht.</p>
+
+    <h2>11. Kalender-Abo</h2>
+    <p>Nur wenn du es hinzufügst. Dein Kalender (z. B. Google, Apple, Microsoft) ruft die Einträge regelmäßig über eine geheime, nur dir bekannte Adresse ab und speichert sie bei sich; dafür gilt die Datenschutzerklärung deines Kalenderanbieters. Die Einträge enthalten keine Namen deiner Kontakte, nur Anzahl und Art der Aufgaben. Wer die Adresse kennt, sieht diese Einträge. Du kannst sie jederzeit neu erzeugen; die alte funktioniert dann nicht mehr.</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO.</p>
+
+    <h2>12. Hosting der App: GitHub Pages</h2>
+    <p>Die Programmdateien der App (Seiten, Schriften, Bilder) liefert GitHub Pages aus, ein Dienst der GitHub, Inc., USA (gehört zu Microsoft). Dabei verarbeitet GitHub technisch deine IP-Adresse und protokolliert sie zur Sicherheit nach seiner eigenen <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Datenschutzerklärung</a>. Deine Inhalte aus der App liegen nicht bei GitHub. Grundlage der Übermittlung in die USA: EU-US Data Privacy Framework (Microsoft und GitHub sind zertifiziert).</p>
+    <p class="rg">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren Bereitstellung).</p>
+
+    <h2>13. Speicher in deinem Browser, keine Tracking-Cookies</h2>
+    <p>Die App speichert in deinem Browser nur, was für die Anmeldung und die Funktion nötig ist: deinen Login, ob ein Hinweis schon gezeigt wurde, und die App-Dateien für schnelleres Laden. Es gibt keine Analyse- oder Werbe-Cookies und keine Tracking-Dienste. Schriften werden vom eigenen Server der App geladen, nicht von Google.</p>
+    <p class="rg">Rechtsgrundlage: § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich).</p>
+
+    <h2>14. Wie lange gespeichert wird</h2>
+    <ul>
+      <li>Dein Zugang und alles, was du einträgst: bis dein Konto gelöscht wird. Kontakte, Notizen und Entwürfe kannst du selbst jederzeit löschen.</li>
+      <li>Einladungscodes: gültig 14 Tage; gespeichert wird nur ein verschlüsselter Wert (Hash).</li>
+      <li>Login-Protokolle: nach den Fristen von Supabase (Tage bis wenige Wochen).</li>
+      <li>Bei Anthropic: höchstens 30 Tage (Abschnitt 6). Bei Brevo: Versandprotokolle nach den Fristen von Brevo.</li>
+      <li>Push-Abo: bis du Push ausschaltest oder der Browser das Abo beendet.</li>
     </ul>
 
-    <h2>Wer sieht was?</h2>
-    <ul>
-      <li>Deine Daten siehst nur du. Das ist in der Datenbank technisch abgesichert.</li>
-      <li>Die Person, die dich eingeladen hat, sieht deinen Vornamen und nur das, was du ausdrücklich freigibst (Ziele, Führungshinweise, Rahmen, Meilensteine). Deine Kontakte sieht sie nie.</li>
-    </ul>
+    <h2>15. Konto löschen</h2>
+    <p>Schreib mir eine Mail (Abschnitt 1) von der Adresse, mit der du angemeldet bist. Ich lösche dein Konto innerhalb von 30 Tagen, meist sofort. Dabei werden alle deine Daten gelöscht: Profil, Kompass-Ergebnis, Ziele, Steckbrief, Kontakte, Notizen, Einstellungen, Push-Abos, das Kalender-Abo und nicht eingelöste Einladungscodes.</p>
+    <p>Personen, die du eingeladen hast, behalten ihr Konto und gehören dann direkt zu der Person, die dich eingeladen hat. Was sie dir freigegeben hatten, ist danach wieder privat.</p>
 
-    <h2>Welche Dienste sind beteiligt?</h2>
-    <ul>
-      <li><strong>Supabase</strong> (Rechenzentrum Frankfurt, EU): Datenbank und Login.</li>
-      <li><strong>Brevo</strong> (EU): Versand der Login-Mails, der Erinnerungsmails (mit den Vornamen deiner fälligen Kontakte und deinen 3 Schritten) und der Einladungsmails. Die Adresse einer eingeladenen Person wird nur für den Versand verwendet und in der App nicht gespeichert.</li>
-      <li><strong>Push-Dienst deines Browsers</strong> (Apple, Google, Mozilla oder Microsoft): nur wenn du Push einschaltest. Die Nachricht ist verschlüsselt; der Dienst sieht nur, dass eine Nachricht an dein Gerät geht. Ausschalten jederzeit in der App unter Profil › Erinnerungen.</li>
-      <li><strong>Dein Kalender</strong> (z. B. Google, Apple, Microsoft): nur wenn du das Kalender-Abo hinzufügst. Der Kalender holt die Einträge über eine geheime Adresse ab. Die Einträge enthalten keine Namen deiner Kontakte.</li>
-      <li><strong>GitHub Pages</strong>: liefert die Programmdateien der App aus. Dabei wird technisch deine IP-Adresse verarbeitet, es liegen dort aber keine deiner Daten.</li>
-      <li><strong>Anthropic (Claude)</strong>: nur wenn du KI-Funktionen einschaltest (Wortstil, Nachrichtenentwürfe). Anthropic (USA) nutzt die Daten nicht zum Training und löscht sie nach spätestens 30 Tagen. Gespeichert wird in der App nur dein Wortstil-Steckbrief.</li>
-    </ul>
+    <h2>16. Deine Rechte</h2>
+    <p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen aus berechtigtem Interesse (Art. 21). Eine Einwilligung kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3), meistens direkt in der App. Schreib mir dafür eine Mail (Abschnitt 1).</p>
+    <p>Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren. Für mich zuständig ist die griechische Datenschutzbehörde (Hellenic Data Protection Authority, Kifisias 1–3, 115 23 Athen, <a href="https://www.dpa.gr" target="_blank" rel="noopener">dpa.gr</a>). Du kannst dich auch an die Behörde deines Wohnorts wenden: in Deutschland an die Behörde deines Bundeslands, in Österreich an die Datenschutzbehörde (dsb.gv.at), in der Schweiz an den Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB, edoeb.admin.ch). Für Nutzerinnen und Nutzer in der Schweiz gilt zusätzlich das Datenschutzgesetz (DSG).</p>
 
-    <h2>Deine Rechte</h2>
-    <p>Du kannst jederzeit Auskunft, Berichtigung oder Löschung deines Zugangs und aller Daten verlangen. Schreib dafür an <a href="mailto:academy@tanjawissel.ch">academy@tanjawissel.ch</a>.</p>
+    <h2>17. Kein Sprachdienst</h2>
+    <p>Die App nimmt keinen Ton auf. Wenn du Notizen diktierst, macht das die Tastatur deines Handys (z. B. von Apple oder Google); dafür gelten deren Bedingungen.</p>
+
+    <h2>18. Änderungen</h2>
+    <p>Wenn sich an der App etwas ändert, passe ich diese Erklärung an. Wesentliche Änderungen zeige ich dir in der App an.</p>
+
+    <p class="muted small">Stand: Oktober 2026 · <a href="impressum.html">Impressum</a></p>
   </main>
+  <script>
+    document.querySelectorAll('a.cloak').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        location.href = 'mailto:' + a.getAttribute('data-u') + String.fromCharCode(64) + a.getAttribute('data-d');
+      });
+    });
+  </script>
 </body>
 </html>

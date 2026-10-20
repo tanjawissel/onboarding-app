@@ -136,7 +136,7 @@
         <div class="actions"><button class="btn block" ${state.busy ? 'disabled' : ''}>Login-Mail schicken</button></div>
       </form>
       <p class="muted small">Noch kein Zugang? Die App ist nur mit persönlicher Einladung nutzbar. Frag die Person, die dich ins Team geholt hat.</p>
-      <p class="muted small"><a href="#/code">Ich habe schon einen Code</a> · <a href="datenschutz.html">Datenschutz</a></p>`;
+      <p class="muted small"><a href="#/code">Ich habe schon einen Code</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a></p>`;
   }
 
   function viewCode() {
@@ -172,7 +172,7 @@
         <label class="field" for="email">E-Mail-Adresse</label>
         <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
         <label class="check"><input type="checkbox" name="einwilligung" required>
-          <span>Ich habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzhinweise</a> gelesen und bin einverstanden, dass meine Angaben für die App gespeichert werden.</span></label>
+          <span>Ich habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen. Mir ist klar, dass meine Angaben gespeichert werden, damit ich die App nutzen kann.</span></label>
         <div class="actions"><button class="btn block" ${state.busy ? 'disabled' : ''}>Zugang anlegen</button></div>
       </form>
       <p class="muted small">Du hast schon einen Zugang? <a href="#/login">Hier anmelden</a></p>`;
@@ -216,7 +216,7 @@
           <button class="btn ghost small" data-act="logout">Abmelden</button>
         </div>
       </div>
-      <p class="muted small"><a href="datenschutz.html">Datenschutz</a></p>`;
+      <p class="muted small"><a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a></p>`;
   }
 
   async function viewTeam() {
@@ -383,7 +383,7 @@
         einwilligung: d.einwilligung === 'on',
       };
       if (!body.code || !body.vorname || !EMAIL.test(body.email)) { say('Bitte füll Code, Vorname und E-Mail-Adresse aus.', true); return render(); }
-      if (!body.einwilligung) { say('Bitte bestätige die Datenschutzhinweise.', true); return render(); }
+      if (!body.einwilligung) { say('Bitte bestätige, dass du die Datenschutzerklärung gelesen hast.', true); return render(); }
       return busy(async () => {
         let res, out = {};
         try {
@@ -399,7 +399,7 @@
         const msgs = {
           code_ungueltig: 'Der Einladungscode ist ungültig, schon benutzt oder abgelaufen. Frag nach einem neuen Code.',
           zu_viele_versuche: 'Zu viele Versuche. Bitte warte eine Stunde und versuch es dann noch einmal.',
-          einwilligung_fehlt: 'Bitte bestätige die Datenschutzhinweise.',
+          einwilligung_fehlt: 'Bitte bestätige, dass du die Datenschutzerklärung gelesen hast.',
           invalid_request: 'Bitte prüf deine Angaben (Code, Vorname, E-Mail-Adresse).',
         };
         say(msgs[out.error] || 'Das hat leider nicht geklappt. Bitte versuch es gleich noch einmal.', true);
