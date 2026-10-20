@@ -376,7 +376,7 @@
       <div class="card">
         <h3 style="margin-top:0">So gehen wir mit deinen Proben um</h3>
         <ul class="steps">
-          <li><span class="num">1</span><div><strong>Deine Schreibproben</strong> gehen nur zur Auswertung an eine KI und werden danach <strong>verworfen, nicht gespeichert</strong>.</div></li>
+          <li><span class="num">1</span><div><strong>Deine Schreibproben</strong> gehen nur zur Auswertung an eine KI. <strong>Die App speichert sie nicht</strong>, Anthropic löscht sie nach spätestens 30 Tagen.</div></li>
           <li><span class="num">2</span><div><strong>Dein Wortstil-Steckbrief</strong> entsteht daraus und liegt in deinem Profil. Nur du kannst ihn lesen und jederzeit ändern.</div></li>
           <li><span class="num">3</span><div><strong>Dein Sponsor</strong> sieht deinen Steckbrief nie. Er lässt sich auch nicht freigeben.</div></li>
         </ul>
@@ -384,7 +384,7 @@
 
       <label class="check"><input type="checkbox" id="wsConsent" ${ws.consent ? 'checked' : ''}>
         <span>Ich bin einverstanden, dass meine Schreibproben zur Auswertung an die KI gehen.</span></label>
-      <div class="notice">Die Auswertung macht Claude als KI, über einen Server der App. Du brauchst dafür <strong>kein eigenes Claude-Konto</strong>. Deine Proben gehen nur für die Auswertung an Anthropic (den Anbieter von Claude) und werden nicht gespeichert, auch nicht in der App.</div>
+      <div class="notice">Die Auswertung macht Claude, die KI von Anthropic (USA), über einen Server der App. Du brauchst dafür <strong>kein eigenes Claude-Konto</strong>. Anthropic nutzt deine Proben nicht zum Training und löscht sie nach spätestens 30 Tagen. In der App bleibt nur dein Steckbrief. Damit schaltest du auch die KI-Entwürfe für deine Kontakte ein (Profil › KI für Entwürfe, jederzeit ausschaltbar).</div>
       ${saveNote()}
       <div class="actions split"><button class="btn ghost" data-act="home">← Übersicht</button><button class="btn" data-act="ws-begin" id="wsStartBtn" ${ws.consent && !state.saving ? '' : 'disabled'}>Los geht's</button></div>`;
   }

@@ -202,7 +202,7 @@
         <p class="small muted">Dazwischen steht „Hallo“.</p>
         <h3>KI für Entwürfe</h3>
         <label class="check"><input type="checkbox" id="ki" name="ki" ${p.einwilligung_ki_am ? 'checked' : ''}>
-          <span>KI-Entwürfe einschalten<br><span class="muted small">Dann schreibt die KI deine Nachrichtenentwürfe und wertet deine Wortstil-Probe aus. Dafür gehen dein Steckbrief, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zum Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts.</span></span></label>
+          <span>KI-Entwürfe einschalten<br><span class="muted small">Dann schreibt die KI deine Nachrichtenentwürfe und wertet deine Wortstil-Probe aus. Dafür gehen dein Steckbrief, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zum Kontakt an Claude (Anthropic, USA). Den Vornamen des Kontakts ersetzt die App vorher durch „[Name]“; schreib in Notizen möglichst keine weiteren Namen oder heiklen Angaben. Anthropic nutzt die Daten nicht zum Training und löscht sie nach spätestens 30 Tagen. Ausschalten jederzeit hier.</span></span></label>
         <div class="actions"><button class="btn" ${state.busy ? 'disabled' : ''}>Speichern</button></div>
       </form>
       <a class="tile" href="#/erinnerungen" style="margin-bottom:16px">
