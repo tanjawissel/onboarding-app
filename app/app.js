@@ -295,6 +295,8 @@
     const now = Date.now();
     const status = (c) => c.widerrufen_am ? 'widerrufen' : c.genutzt >= c.max_nutzungen ? 'eingelöst' : new Date(c.gueltig_bis) < now ? 'abgelaufen' : `gültig bis ${fmtDate(c.gueltig_bis)}`;
     const aktiv = (c) => !c.widerrufen_am && c.genutzt < c.max_nutzungen && new Date(c.gueltig_bis) >= now;
+    // Nur offene Codes zeigen: eingelöste stehen als Partner oben, abgelaufene/widerrufene braucht niemand mehr
+    const offen = (codes.data || []).filter(aktiv);
     const nc = state.neuerCode;
     const link = nc ? `${C.appUrl}?einladung=${encodeURIComponent(nc)}` : '';
     const text = nc ? `Hallo! Hier ist deine Einladung für unsere Team-App: ${link} (Code ${nc}, 14 Tage gültig).` : '';
@@ -335,11 +337,11 @@
         : '<p class="empty">Noch keine Partner. Sobald jemand deinen Code einlöst, steht die Person hier.</p>'}
         <p class="muted small">Du siehst hier nur Vornamen und das, was deine Partner selbst freigeben: Ziele, Führungshinweise und Rahmen. Kontakte und Typ deiner Partner siehst du nie.</p>
       </div>
-      ${(codes.data || []).length ? `<div class="card">
-        <h2>Meine Einladungscodes</h2>
-        <ul class="clist">${codes.data.map((c) => `<li><a><div class="c-top"><span class="c-name">${esc(c.notiz || 'ohne Notiz')}</span>
+      ${offen.length ? `<div class="card">
+        <h2>Meine offenen Einladungscodes</h2>
+        <ul class="clist">${offen.map((c) => `<li><a><div class="c-top"><span class="c-name">${esc(c.notiz || 'ohne Notiz')}</span>
           <span class="due">${esc(status(c))}</span></div>
-          ${aktiv(c) ? `<div class="c-sub"><button class="linklike" data-act="widerrufen" data-id="${esc(c.id)}">widerrufen</button></div>` : ''}</a></li>`).join('')}</ul>
+          <div class="c-sub"><button class="linklike" data-act="widerrufen" data-id="${esc(c.id)}">widerrufen</button></div></a></li>`).join('')}</ul>
       </div>` : ''}`;
   }
 
