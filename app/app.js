@@ -1,6 +1,7 @@
-// App-Gerüst: Login per E-Mail (Link oder 6-stelliger Code), Einladung annehmen,
-// Start, Profil und Team (Partner einladen). Daten liegen in Supabase (Frankfurt),
-// geschützt durch Row Level Security: Jede Abfrage sieht nur die eigenen Zeilen.
+// Kern der App: Login per E-Mail (Link oder 6-stelliger Code), Einladung annehmen,
+// Profil und Team (Partner einladen, Sponsor-Ansicht). CRM (crm.js) und Kompass (kompass.js)
+// hängen sich über window.TW ein. Daten liegen in Supabase (Frankfurt), geschützt durch
+// Row Level Security: Jede Abfrage sieht nur die eigenen Zeilen.
 (() => {
   'use strict';
 
@@ -11,10 +12,12 @@
 
   const app = document.getElementById('app');
   const tabbar = document.getElementById('tabbar');
+  const modalRoot = document.getElementById('modal-root');
 
   const state = {
     session: null,
     profil: null,
+    ready: false,         // Daten nach dem Login geladen
     loginEmail: '',
     einladung: '',        // Code aus ?einladung=…
     neuerCode: null,      // gerade erzeugter Einladungscode (nur einmal sichtbar)
@@ -26,8 +29,15 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const LINK = /^https:\/\/[a-z0-9-]+\.superpatch\.com(\/.*)?$/i;
-  const route = () => (location.hash.replace(/^#\/?/, '') || 'heute').split('?')[0];
-  const go = (r) => { if (route() === r) render(); else location.hash = '#/' + r; };
+  // #/name/id/sub?param=…
+  function parseRoute() {
+    const h = location.hash.replace(/^#\/?/, '') || 'heute';
+    const [path, query] = h.split('?');
+    const parts = path.split('/');
+    return { name: parts[0], id: parts[1], sub: parts[2], params: Object.fromEntries(new URLSearchParams(query || '')) };
+  }
+  const route = () => parseRoute().name;
+  const go = (r) => { const hash = r.startsWith('#') ? r : '#/' + r; if (location.hash === hash) render(); else location.hash = hash; };
   const say = (text, warm = false) => { state.msg = { text, warm }; };
   const notice = () => {
     if (!state.msg) return '';
@@ -51,6 +61,67 @@
     if (/expired|invalid/i.test(m)) return 'Der Code stimmt nicht oder ist abgelaufen. Fordere einfach einen neuen an.';
     return 'Das hat leider nicht geklappt. Bitte versuch es gleich noch einmal.';
   }
+
+  // Hinweis unten
+  let toastTimer;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  // Kopieren: Clipboard-API, sonst der alte Weg über ein unsichtbares Textfeld.
+  function copyText(text, msg) {
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (_) { /* nichts */ }
+      ta.remove(); toast(ok ? msg : 'Kopieren hat nicht geklappt. Markier den Text und kopier ihn selbst.');
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast(msg), fallback);
+    else fallback();
+  }
+
+  // Dialoge
+  function openModal(html, after) {
+    modalRoot.innerHTML = `<div class="backdrop" data-act="modal-bg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+    const first = modalRoot.querySelector('input, select, textarea, button');
+    if (first) first.focus();
+    if (after) after(modalRoot);
+  }
+  function closeModal() { modalRoot.innerHTML = ''; TW.onModalClose.forEach((f) => f()); }
+
+  // Anfrage an die Server-Funktion „wortstil“ mit dem Login-Token. Fehler kommen als { code } zurück.
+  async function callWortstil(payload) {
+    const { data } = await sb.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw { code: 'not_signed_in' };
+    let res;
+    try {
+      res = await fetch(C.wortstilUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, apikey: C.supabaseAnonKey },
+        body: JSON.stringify(payload),
+      });
+    } catch (_) { throw { code: 'network' }; }
+    let out = {};
+    try { out = await res.json(); } catch (_) { /* leer */ }
+    if (!res.ok || out.error) throw { code: out.error || 'upstream_error' };
+    return out;
+  }
+
+  // Schnittstelle für crm.js und kompass.js
+  const TW = window.TW = {
+    sb, C, state, esc, say, notice, toast, copyText, openModal, closeModal, greeting, fmtDate,
+    route: parseRoute, go, render: () => render(), callWortstil,
+    views: {},         // name → { html(r) → string|Promise, after?(r), tab? }
+    onLogin: [],       // async () → Daten laden
+    onLogout: [],      // () → Zwischenstände im Speicher verwerfen
+    onRoute: [],       // (r) → bei jedem Seitenwechsel
+    onModalClose: [],
+    sponsorAnsichtHtml: null, // kommt aus kompass.js
+  };
 
   // ---------- Bildschirme ohne Login ----------
   function viewLogin() {
@@ -108,34 +179,6 @@
   }
 
   // ---------- Bildschirme mit Login ----------
-  function viewHeute() {
-    const p = state.profil || {};
-    const offen = [];
-    if (!p.vorname) offen.push('Vorname');
-    if (!p.superpatch_link) offen.push('Mein Superpatch-Link');
-    return `
-      <div class="greet">
-        <h1>${greeting()}${p.vorname ? ', ' + esc(p.vorname) : ''}!</h1>
-        <p class="lead">Dein Business-Fokus für heute</p>
-      </div>
-      ${notice()}
-      ${offen.length ? `<div class="card fu-box">
-        <h2>Dein Profil</h2>
-        <p>Es fehlt noch: ${offen.map(esc).join(', ')}. Den Superpatch-Link setzt die App später in deine Nachrichten ein.</p>
-        <div class="actions"><a class="btn small" href="#/profil">Profil ergänzen</a></div>
-      </div>` : ''}
-      <div class="card">
-        <h2>Bald hier</h2>
-        <p class="muted">Kontakte, Follow-ups, deine 3 Prioritäten und das Wochenziel kommen als Nächstes in die App. Bis dahin kannst du sie im <a href="prototyp/">Prototyp mit Beispieldaten</a> ansehen.</p>
-        <p class="muted small">Wochenziel laut Profil: ${esc(p.kontakte_pro_woche ?? 5)} neue Kontakte pro Woche.</p>
-      </div>
-      <div class="card sand">
-        <h2>Academy</h2>
-        <p>Videos, Spickzettel und Startklar-Checkliste.</p>
-        <div class="actions"><a class="btn secondary small" href="${esc(C.academyUrl)}" target="_blank" rel="noopener">Zur Academy</a></div>
-      </div>`;
-  }
-
   function viewProfil() {
     const p = state.profil || {};
     return `
@@ -146,14 +189,20 @@
         <input type="text" id="vorname" name="vorname" maxlength="40" value="${esc(p.vorname)}">
         <label class="field" for="link">Mein Superpatch-Link <span class="opt">(z. B. https://deinname.superpatch.com)</span></label>
         <input type="url" id="link" name="superpatch_link" maxlength="200" inputmode="url" placeholder="https://…superpatch.com" value="${esc(p.superpatch_link)}">
-        <label class="field" for="woche">Wochenziel: neue Kontakte pro Woche</label>
+        <label class="field" for="woche">Wochenziel: neue Kontakte ansprechen</label>
         <input type="number" id="woche" name="kontakte_pro_woche" min="1" max="30" value="${esc(p.kontakte_pro_woche ?? 5)}">
+        <p class="small muted">Vorschlag aus deinem Freiheits-Kompass (Ziel D3): unter 3 Std. = 3 · 3–5 Std. = 5 · 5–10 Std. = 8 · mehr als 10 Std. = 14.</p>
+        <h3>Begrüßung</h3>
         <div class="row2">
           <div><label class="field" for="morgen">„Guten Morgen“ bis</label>
             <input type="time" id="morgen" name="begruessung_morgen_bis" value="${esc(String(p.begruessung_morgen_bis || '11:00').slice(0, 5))}"></div>
           <div><label class="field" for="abend">„Guten Abend“ ab</label>
             <input type="time" id="abend" name="begruessung_abend_ab" value="${esc(String(p.begruessung_abend_ab || '18:00').slice(0, 5))}"></div>
         </div>
+        <p class="small muted">Dazwischen steht „Hallo“.</p>
+        <h3>KI für Entwürfe</h3>
+        <label class="check"><input type="checkbox" id="ki" name="ki" ${p.einwilligung_ki_am ? 'checked' : ''}>
+          <span>KI-Entwürfe einschalten<br><span class="muted small">Dann schreibt die KI deine Nachrichtenentwürfe und wertet deine Wortstil-Probe aus. Dafür gehen dein Steckbrief, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zum Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts.</span></span></label>
         <div class="actions"><button class="btn" ${state.busy ? 'disabled' : ''}>Speichern</button></div>
       </form>
       <div class="card">
@@ -167,17 +216,30 @@
   }
 
   async function viewTeam() {
-    const [partner, codes] = await Promise.all([
+    const myId = state.session.user.id;
+    const [partner, codes, ansicht] = await Promise.all([
       sb.rpc('meine_partner'),
       sb.from('einladungscodes').select('id, notiz, max_nutzungen, genutzt, gueltig_bis, widerrufen_am, erstellt_am').order('erstellt_am', { ascending: false }).limit(20),
+      // RLS: eigene Zeile (Vorschau) und die der DIREKTEN Partner
+      sb.from('sponsor_ansicht').select('owner_id, ziele, fuehrung, rahmen, aktualisiert_am').neq('owner_id', myId),
     ]);
     const list = partner.data || [];
+    const byOwner = Object.fromEntries((ansicht.data || []).map((a) => [a.owner_id, a]));
     const now = Date.now();
     const status = (c) => c.widerrufen_am ? 'widerrufen' : c.genutzt >= c.max_nutzungen ? 'eingelöst' : new Date(c.gueltig_bis) < now ? 'abgelaufen' : `gültig bis ${fmtDate(c.gueltig_bis)}`;
     const aktiv = (c) => !c.widerrufen_am && c.genutzt < c.max_nutzungen && new Date(c.gueltig_bis) >= now;
     const nc = state.neuerCode;
     const link = nc ? `${C.appUrl}?einladung=${encodeURIComponent(nc)}` : '';
     const text = nc ? `Hallo! Hier ist deine Einladung für unsere Team-App: ${link} (Code ${nc}, 14 Tage gültig).` : '';
+    const partnerItem = (p) => {
+      const a = byOwner[p.id];
+      return `<li><div class="c-item"><div class="c-top"><span class="c-name">${esc(p.vorname || 'ohne Namen')}</span>
+        <span class="due">${p.eingeladen_am ? 'seit ' + fmtDate(p.eingeladen_am) : ''}</span></div>
+        ${a && TW.sponsorAnsichtHtml ? `<details class="partner-ansicht"><summary class="small">Freigegebenes Profil ansehen</summary>
+          <div class="sponsor-view">${TW.sponsorAnsichtHtml(a, p.vorname)}
+          <p class="muted small" style="margin-top:12px">Stand ${fmtDate(a.aktualisiert_am)}</p></div></details>`
+        : '<div class="c-sub">Noch nichts freigegeben.</div>'}</div></li>`;
+    };
     return `
       <h1>Team</h1>
       ${notice()}
@@ -187,7 +249,7 @@
           <p style="font-size:1.6rem;font-weight:700;letter-spacing:.12em;margin:.2em 0 .4em">${esc(nc)}</p>
           <p class="muted small" style="word-break:break-all">${esc(link)}</p>
           <div class="actions">
-            <button class="btn small" data-act="copy" data-text="${esc(text)}">Einladung kopieren</button>
+            <button class="btn small" data-act="copy-invite" data-text="${esc(text)}">Einladung kopieren</button>
             <a class="btn secondary small" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">In WhatsApp öffnen</a>
           </div>
           <p class="muted small">Du verschickst die Einladung selbst. Der Code gilt 14 Tage für eine Person.</p>`
@@ -200,10 +262,10 @@
       </div>
       <div class="card">
         <h2>Meine Partner</h2>
-        ${list.length ? `<ul class="clist">${list.map((p) => `<li><a><div class="c-top"><span class="c-name">${esc(p.vorname || 'ohne Namen')}</span>
-          <span class="due">${p.eingeladen_am ? 'seit ' + fmtDate(p.eingeladen_am) : ''}</span></div></a></li>`).join('')}</ul>`
+        ${partner.error || ansicht.error ? '<p class="notice warm">Die Partnerliste konnte nicht geladen werden. Bitte lade die Seite neu.</p>' : ''}
+        ${list.length ? `<ul class="clist">${list.map(partnerItem).join('')}</ul>`
         : '<p class="empty">Noch keine Partner. Sobald jemand deinen Code einlöst, steht die Person hier.</p>'}
-        <p class="muted small">Du siehst hier nur Vornamen. Ziele und Hinweise siehst du, wenn deine Partner sie freigeben. Kontakte und Typ deiner Partner siehst du nie.</p>
+        <p class="muted small">Du siehst hier nur Vornamen und das, was deine Partner selbst freigeben: Ziele, Führungshinweise und Rahmen. Kontakte und Typ deiner Partner siehst du nie.</p>
       </div>
       ${(codes.data || []).length ? `<div class="card">
         <h2>Meine Einladungscodes</h2>
@@ -213,25 +275,35 @@
       </div>` : ''}`;
   }
 
+  TW.views.profil = { html: viewProfil };
+  TW.views.team = { html: viewTeam };
+
   // ---------- Darstellen ----------
-  let lastRoute = null;
+  let lastHash = null;
+  let renderToken = 0;
   async function render() {
-    const r = route();
+    const token = ++renderToken;
+    const r = parseRoute();
     const loggedIn = !!state.session;
     tabbar.hidden = !loggedIn;
-    tabbar.querySelectorAll('a').forEach((a) => a.classList.toggle('active', a.dataset.tab === r));
 
-    let html;
+    let html, view = null;
     if (!loggedIn) {
-      html = r === 'code' ? viewCode() : r === 'einladung' ? viewEinladung() : viewLogin();
-    } else if (r === 'profil') html = viewProfil();
-    else if (r === 'team') html = await viewTeam();
-    else html = viewHeute();
+      html = r.name === 'code' ? viewCode() : r.name === 'einladung' ? viewEinladung() : viewLogin();
+    } else if (!state.ready) {
+      html = '<p class="muted">Einen Moment …</p>';
+    } else {
+      view = TW.views[r.name] || TW.views.heute;
+      html = await view.html(r);
+    }
+    if (token !== renderToken) return; // inzwischen neu gezeichnet
+    const tab = view ? (view.tab || r.name) : '';
+    tabbar.querySelectorAll('a').forEach((a) => a.classList.toggle('active', a.dataset.tab === tab));
 
     // Eingaben bleiben beim Neuzeichnen auf derselben Seite erhalten (z. B. nach einer Fehlermeldung)
     const keep = {};
-    if (lastRoute === r) app.querySelectorAll('input[id]').forEach((i) => { keep[i.id] = i.type === 'checkbox' ? i.checked : i.value; });
-    lastRoute = r;
+    if (lastHash === location.hash && !(view && view.noKeep)) app.querySelectorAll('input[id]').forEach((i) => { keep[i.id] = i.type === 'checkbox' ? i.checked : i.value; });
+    lastHash = location.hash;
     app.innerHTML = html;
     app.querySelectorAll('input[id]').forEach((i) => {
       if (!(i.id in keep)) return;
@@ -239,12 +311,26 @@
     });
     const first = app.querySelector('input:not([type=checkbox])');
     if (!loggedIn && first && !first.value) first.focus({ preventScroll: true });
+    if (view && view.after) view.after(r);
   }
 
   async function loadProfil() {
     const { data, error } = await sb.from('profil').select('*').eq('id', state.session.user.id).maybeSingle();
     if (error) say('Dein Profil konnte nicht geladen werden. Bitte lade die Seite neu.', true);
     state.profil = data;
+  }
+
+  // Nach dem Login: Profil und die Daten der Module laden
+  async function afterLogin() {
+    state.ready = false;
+    await loadProfil();
+    await Promise.all(TW.onLogin.map((f) => f().catch((e) => { console.error(e); say('Ein Teil deiner Daten konnte nicht geladen werden. Bitte lade die Seite neu.', true); })));
+    state.ready = true;
+  }
+
+  function afterLogout() {
+    state.profil = null; state.neuerCode = null; state.ready = false;
+    TW.onLogout.forEach((f) => f());
   }
 
   async function busy(fn) {
@@ -254,9 +340,11 @@
 
   // ---------- Formulare ----------
   app.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const f = ev.target; const d = Object.fromEntries(new FormData(f));
+    const f = ev.target;
     const kind = f.dataset.form;
+    if (!kind) return; // Formulare der Module
+    ev.preventDefault();
+    const d = Object.fromEntries(new FormData(f));
 
     if (kind === 'login') {
       const email = String(d.email || '').trim().toLowerCase();
@@ -318,6 +406,7 @@
       if (link && !LINK.test(link)) { say('Der Superpatch-Link muss so aussehen: https://deinname.superpatch.com', true); return render(); }
       const woche = Number(d.kontakte_pro_woche);
       if (!(woche >= 1 && woche <= 30)) { say('Wochenziel: bitte eine Zahl von 1 bis 30.', true); return render(); }
+      const ki = d.ki === 'on';
       return busy(async () => {
         const { data, error } = await sb.from('profil').update({
           vorname: String(d.vorname || '').trim() || null,
@@ -325,6 +414,7 @@
           kontakte_pro_woche: woche,
           begruessung_morgen_bis: d.begruessung_morgen_bis || '11:00',
           begruessung_abend_ab: d.begruessung_abend_ab || '18:00',
+          einwilligung_ki_am: ki ? (state.profil?.einwilligung_ki_am || new Date().toISOString()) : null,
         }).eq('id', state.session.user.id).select().maybeSingle();
         if (error || !data) say('Speichern hat nicht geklappt. Bitte prüf deine Angaben.', true);
         else { state.profil = data; say('Gespeichert.'); }
@@ -341,17 +431,15 @@
   });
 
   // ---------- Knöpfe ----------
-  app.addEventListener('click', async (ev) => {
+  document.addEventListener('click', async (ev) => {
     const b = ev.target.closest('[data-act]');
     if (!b) return;
     const act = b.dataset.act;
+    if (act === 'modal-bg') { if (ev.target === b) closeModal(); return; }
+    if (act === 'modal-close') { closeModal(); return; }
     if (act === 'anderemail') { state.loginEmail = ''; return go('login'); }
-    if (act === 'logout') { await sb.auth.signOut(); state.profil = null; state.neuerCode = null; return go('login'); }
-    if (act === 'copy') {
-      try { await navigator.clipboard.writeText(b.dataset.text); b.textContent = 'Kopiert ✓'; }
-      catch { window.prompt('Zum Kopieren markieren:', b.dataset.text); }
-      return;
-    }
+    if (act === 'logout') { await sb.auth.signOut(); afterLogout(); return go('login'); }
+    if (act === 'copy-invite') { copyText(b.dataset.text, 'Einladung kopiert'); b.textContent = 'Kopiert ✓'; return; }
     if (act === 'widerrufen') {
       if (!window.confirm('Diesen Einladungscode wirklich widerrufen?')) return;
       const { error } = await sb.rpc('einladungscode_widerrufen', { p_id: b.dataset.id });
@@ -359,9 +447,14 @@
       return render();
     }
   });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.innerHTML) closeModal(); });
 
   window.addEventListener('hashchange', () => {
-    if (route() !== 'team') state.neuerCode = null;
+    const r = parseRoute();
+    if (r.name !== 'team') state.neuerCode = null;
+    if (modalRoot.innerHTML) closeModal();
+    window.scrollTo(0, 0);
+    TW.onRoute.forEach((f) => f(r));
     render();
   });
 
@@ -382,17 +475,22 @@
       history.replaceState(null, '', location.pathname + '#/heute');
       if (!state.session) say('Der Link hat in diesem Browser nicht geklappt. Gib einfach den 6-stelligen Code aus der Mail ein.', true);
     }
-    if (state.session) await loadProfil();
+    if (state.session) { await render(); await afterLogin(); }
     else if (!['code', 'einladung'].includes(route())) history.replaceState(null, '', location.pathname + location.search + '#/login');
     await render();
 
-    sb.auth.onAuthStateChange(async (event, session) => {
+    sb.auth.onAuthStateChange((event, session) => {
       const was = !!state.session;
       state.session = session;
-      if (session && !was) { await loadProfil(); if (['login', 'code', 'einladung'].includes(route())) location.hash = '#/heute'; else render(); }
-      if (!session && was) { state.profil = null; go('login'); }
+      // Nicht direkt im Callback auf Supabase warten (sonst blockiert supabase-js), darum setTimeout
+      if (session && !was) setTimeout(async () => {
+        if (['login', 'code', 'einladung'].includes(route())) history.replaceState(null, '', location.pathname + '#/heute');
+        await render(); await afterLogin(); render();
+      }, 0);
+      if (!session && was) { afterLogout(); go('login'); }
     });
   }
 
-  start();
+  // Erst starten, wenn crm.js und kompass.js sich eingehängt haben
+  document.addEventListener('DOMContentLoaded', start);
 })();

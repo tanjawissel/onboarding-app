@@ -8,7 +8,7 @@
   <title>Tanja Wissel · App</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23C2714F%22/%3E%3C/svg%3E">
   <link rel="stylesheet" href="fonts/fonts.css">
-  <link rel="stylesheet" href="app/styles.css">
+  <link rel="stylesheet" href="app/styles.css?v=2">
 </head>
 <body>
   <header class="topbar">
@@ -20,12 +20,20 @@
   </main>
   <nav class="tabbar" id="tabbar" aria-label="Hauptnavigation" hidden>
     <a href="#/heute" data-tab="heute"><span aria-hidden="true">☀</span>Heute</a>
+    <a href="#/kontakte" data-tab="kontakte"><span aria-hidden="true">👥</span>Kontakte</a>
+    <a href="#/kompass" data-tab="kompass"><span aria-hidden="true">🧭</span>Kompass</a>
     <a href="#/team" data-tab="team"><span aria-hidden="true">🤝</span>Team</a>
     <a href="#/profil" data-tab="profil"><span aria-hidden="true">👤</span>Profil</a>
   </nav>
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <noscript><p class="wrap">Bitte JavaScript einschalten, damit die App funktioniert.</p></noscript>
   <script src="app/vendor/supabase-2.117.2.js"></script>
-  <script src="app/config.js"></script>
-  <script src="app/app.js"></script>
+  <script src="app/config.js?v=2"></script>
+  <script src="app/app.js?v=2"></script>
+  <script src="app/crm-data.js?v=2"></script>
+  <script src="app/crm.js?v=2"></script>
+  <script src="app/kompass-data.js?v=2"></script>
+  <script src="app/kompass.js?v=2"></script>
 </body>
 </html>
