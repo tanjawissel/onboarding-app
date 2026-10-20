@@ -9,6 +9,12 @@ window.APP_CONFIG = {
   // „wortstil-dev“ auf Port 8770, weil die echte nur Anfragen von app.tanjawissel.ch annimmt.
   wortstilUrl: location.hostname === 'localhost' ? 'http://localhost:8770/'
     : 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/wortstil',
+  // Erinnerungen (Bereich 5): Probe-Nachricht, Kalender-Abo, Einladung per Mail
+  erinnerungUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/erinnerung',
+  kalenderUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/kalender',
+  einladungMailUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/einladung_mail',
+  // Öffentlicher Web-Push-Schlüssel (VAPID). Der private Schlüssel liegt nur als Supabase-Secret vor.
+  vapidPublicKey: '',
   appUrl: 'https://app.tanjawissel.ch/',
   academyUrl: 'https://academy.tanjawissel.ch',
 };

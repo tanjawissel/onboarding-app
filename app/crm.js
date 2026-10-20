@@ -194,6 +194,7 @@
         <p class="lead">Dein Business-Fokus für heute</p>
       </div>
       ${T.notice()}
+      ${(T.heuteKarten || []).map((f) => f()).join('')}
       ${offen.length ? `<div class="card fu-box">
         <h2>Dein Profil</h2>
         <p>Es fehlt noch: ${offen.map(esc).join(', ')}. Den Superpatch-Link setzt die App in deine Nachrichten ein.</p>

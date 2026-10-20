@@ -2,11 +2,13 @@
 
 Ausgeliefert über GitHub Pages unter https://app.tanjawissel.ch (DNS bei cyon: CNAME `app` → `tanjawissel.github.io.`).
 
-- `index.html` – die App (Login per E-Mail-Link oder 6-stelligem Code, Einladung annehmen, Heute, Kontakte, Kompass, Team, Profil).
+- `index.html` – die App (Login per E-Mail-Link oder 6-stelligem Code, Einladung annehmen, Heute, Kontakte, Kompass, Team, Profil, Erinnerungen).
   Nach Änderungen an `app/*` die Versionsnummer `?v=…` in `index.html` hochzählen (GitHub Pages hält Dateien 10 Minuten im Cache).
 - `app/app.js` – Kern: Login, Router, Profil, Team mit Sponsor-Ansicht; `app/config.js` – öffentliche Supabase-Adresse und anon-Schlüssel
 - `app/crm.js` – CRM und Tagesdashboard (Tabellen kontakte, notizen, verlauf, entwuerfe, prioritaeten); Entwürfe über die Server-Funktion `wortstil`
 - `app/kompass.js` – Freiheits-Kompass und Wortstil-Probe. Gespeichert werden nur Ergebnis, Rahmen, Ziele, Freigaben und Steckbrief, nie Einzelantworten
+- `app/erinnerungen.js` – Erinnerungen (Bereich 5): Home-Bildschirm-Anleitung, Push einschalten (Einwilligung), Profil › Erinnerungen, Kalender-Abo, Karte „Deine ersten Schritte“, Einladung per Mail
+- `sw.js`, `manifest.webmanifest`, `icons/` – installierbare App (PWA): Push empfangen, offline starten, App-Symbol
 - `app/crm-data.js`, `app/kompass-data.js` – Kopien der Stammdaten aus `../Prototyp CRM/data.js` und `../Prototyp Freiheits-Kompass/data.js`
 - `app/vendor/supabase-2.117.2.js` – supabase-js (MIT), lokal eingebunden statt aus einem CDN
 - `datenschutz.html` – vorläufige Datenschutzhinweise für die Testphase (endgültige Fassung kommt aus Bereich 4)

@@ -205,6 +205,10 @@
           <span>KI-Entwürfe einschalten<br><span class="muted small">Dann schreibt die KI deine Nachrichtenentwürfe und wertet deine Wortstil-Probe aus. Dafür gehen dein Steckbrief, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zum Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts.</span></span></label>
         <div class="actions"><button class="btn" ${state.busy ? 'disabled' : ''}>Speichern</button></div>
       </form>
+      <a class="tile" href="#/erinnerungen" style="margin-bottom:16px">
+        <div class="t-label">🔔 Erinnerungen</div>
+        <div class="t-sub">Push, E-Mail, Uhrzeit, Ruhetage und Kalender</div>
+      </a>
       <div class="card">
         <p class="muted small">Angemeldet als <strong>${esc(state.session?.user?.email)}</strong></p>
         <div class="actions split">
@@ -251,8 +255,9 @@
           <div class="actions">
             <button class="btn small" data-act="copy-invite" data-text="${esc(text)}">Einladung kopieren</button>
             <a class="btn secondary small" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">In WhatsApp öffnen</a>
+            <button class="btn secondary small" data-act="er-einladung-mail" data-code="${esc(nc)}">Per Mail schicken</button>
           </div>
-          <p class="muted small">Du verschickst die Einladung selbst. Der Code gilt 14 Tage für eine Person.</p>`
+          <p class="muted small">Du verschickst die Einladung selbst oder lässt sie per Mail schicken. Der Code gilt 14 Tage für eine Person.</p>`
         : `<p class="muted">Erzeuge einen Code für eine Person, die du ins Team holst. Sie wird damit dein direkter Partner.</p>
           <form data-form="einladen" novalidate>
             <label class="field" for="notiz">Für wen? <span class="opt">(nur für dich, z. B. „Maria“)</span></label>

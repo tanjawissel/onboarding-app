@@ -33,13 +33,15 @@
     <h2>Wer sieht was?</h2>
     <ul>
       <li>Deine Daten siehst nur du. Das ist in der Datenbank technisch abgesichert.</li>
-      <li>Die Person, die dich eingeladen hat, sieht deinen Vornamen und nur das, was du ausdrücklich freigibst (Ziele, Führungshinweise, Rahmen). Deine Kontakte sieht sie nie.</li>
+      <li>Die Person, die dich eingeladen hat, sieht deinen Vornamen und nur das, was du ausdrücklich freigibst (Ziele, Führungshinweise, Rahmen, Meilensteine). Deine Kontakte sieht sie nie.</li>
     </ul>
 
     <h2>Welche Dienste sind beteiligt?</h2>
     <ul>
       <li><strong>Supabase</strong> (Rechenzentrum Frankfurt, EU): Datenbank und Login.</li>
-      <li><strong>Brevo</strong> (EU): Versand der Login- und Erinnerungsmails.</li>
+      <li><strong>Brevo</strong> (EU): Versand der Login-Mails, der Erinnerungsmails (mit den Vornamen deiner fälligen Kontakte und deinen 3 Schritten) und der Einladungsmails. Die Adresse einer eingeladenen Person wird nur für den Versand verwendet und in der App nicht gespeichert.</li>
+      <li><strong>Push-Dienst deines Browsers</strong> (Apple, Google, Mozilla oder Microsoft): nur wenn du Push einschaltest. Die Nachricht ist verschlüsselt; der Dienst sieht nur, dass eine Nachricht an dein Gerät geht. Ausschalten jederzeit in der App unter Profil › Erinnerungen.</li>
+      <li><strong>Dein Kalender</strong> (z. B. Google, Apple, Microsoft): nur wenn du das Kalender-Abo hinzufügst. Der Kalender holt die Einträge über eine geheime Adresse ab. Die Einträge enthalten keine Namen deiner Kontakte.</li>
       <li><strong>GitHub Pages</strong>: liefert die Programmdateien der App aus. Dabei wird technisch deine IP-Adresse verarbeitet, es liegen dort aber keine deiner Daten.</li>
       <li><strong>Anthropic (Claude)</strong>: nur wenn du KI-Funktionen nutzt (Wortstil, Nachrichtenentwürfe). Es wird dabei nichts dauerhaft gespeichert.</li>
     </ul>

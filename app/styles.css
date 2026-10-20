@@ -355,3 +355,15 @@ textarea.short { min-height: 56px; }
   .hero-type { background: #fff; color: var(--ink); border: 2px solid var(--bark); }
   .hero-type h1 { color: var(--bark); }
 }
+
+/* ---------- Erinnerungen (Bereich 5) ---------- */
+ol.anl { margin: 8px 0 10px; padding-left: 22px; }
+ol.anl li { margin: 0 0 6px; }
+.tage { display: flex; flex-wrap: wrap; gap: 8px; }
+.tage .tag { position: relative; }
+.tage .tag input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tage .tag span { display: inline-block; min-width: 46px; text-align: center; border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 7px 10px; font-weight: 700; font-size: .9rem; cursor: pointer; }
+.tage .tag input:checked + span { background: var(--bark); color: var(--sand); border-color: var(--bark); }
+.tage .tag input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+a.option { display: block; text-decoration: none; color: inherit; }
+.wrap a.tile, .wrap a.tile .t-label { color: inherit; }
