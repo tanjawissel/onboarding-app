@@ -14,7 +14,7 @@ window.APP_CONFIG = {
   kalenderUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/kalender',
   einladungMailUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/einladung_mail',
   // Öffentlicher Web-Push-Schlüssel (VAPID). Der private Schlüssel liegt nur als Supabase-Secret vor.
-  vapidPublicKey: '',
+  vapidPublicKey: 'BENGYYXuvxBwpcXuQzhdTtbzq8YOdCwBKlACwzvWpA8pG44TmvP3qf-_vsl1dF_wK9sBQZGUtXcwpQubBk2BAJ0',
   appUrl: 'https://app.tanjawissel.ch/',
   academyUrl: 'https://academy.tanjawissel.ch',
 };
