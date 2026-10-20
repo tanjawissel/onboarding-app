@@ -13,6 +13,8 @@ window.APP_CONFIG = {
   erinnerungUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/erinnerung',
   kalenderUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/kalender',
   einladungMailUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/einladung_mail',
+  // Eigenes Konto löschen (Profil › Konto löschen)
+  kontoLoeschenUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/konto_loeschen',
   // Öffentlicher Web-Push-Schlüssel (VAPID). Der private Schlüssel liegt nur als Supabase-Secret vor.
   vapidPublicKey: 'BENGYYXuvxBwpcXuQzhdTtbzq8YOdCwBKlACwzvWpA8pG44TmvP3qf-_vsl1dF_wK9sBQZGUtXcwpQubBk2BAJ0',
   appUrl: 'https://app.tanjawissel.ch/',

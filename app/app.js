@@ -216,7 +216,70 @@
           <button class="btn ghost small" data-act="logout">Abmelden</button>
         </div>
       </div>
-      <p class="muted small"><a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a></p>`;
+      <p class="muted small"><a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a> · <a href="#/konto-loeschen">Konto löschen</a></p>`;
+  }
+
+  // Eigenes Konto löschen (DSGVO Art. 17). Wessen Konto, entscheidet die Server-Funktion allein am Login-Token.
+  const LOESCHWORT = 'LÖSCHEN';
+  function viewKontoLoeschen() {
+    return `
+      <p><a class="back" href="#/profil">← Profil</a></p>
+      <h1>Konto löschen</h1>
+      ${notice()}
+      <div class="card">
+        <p>Wenn du dein Konto löschst, ist alles weg, was du in der App gespeichert hast:</p>
+        <ul>
+          <li>dein Profil und deine Anmeldung</li>
+          <li>deine Kontakte im CRM mit allen Notizen, Entwürfen und dem Verlauf</li>
+          <li>dein Freiheits-Kompass, deine Ziele, dein Rahmen und dein Wortstil-Steckbrief</li>
+          <li>deine 3 Schritte, Meilensteine, Erinnerungen, Push und das Kalender-Abo</li>
+          <li>deine Einladungscodes, die noch niemand eingelöst hat</li>
+        </ul>
+        <p>Die Personen, die du ins Team geholt hast, behalten ihr Konto. Sie gehören dann direkt zu der Person, die dich eingeladen hat. Was sie dir freigegeben hatten, ist danach wieder privat.</p>
+        <p class="muted small">Das Löschen lässt sich nicht rückgängig machen. Dein Konto bei Superpatch selbst bleibt davon unberührt.</p>
+      </div>
+      <div class="card">
+        <h2>Vorher deine Kontakte sichern?</h2>
+        <p class="muted small">Du bekommst eine Tabelle (CSV) mit deinen Kontakten und Notizen. Sie öffnet sich in Excel, Numbers oder Google Tabellen. Die Datei liegt danach nur auf deinem Gerät.</p>
+        <div class="actions"><button class="btn secondary small" data-act="kontakte-csv">Kontakte herunterladen</button></div>
+      </div>
+      <form class="card" data-form="konto-loeschen" novalidate>
+        <label class="field" for="loeschwort">Zum Bestätigen tippe <strong>${LOESCHWORT}</strong></label>
+        <input type="text" id="loeschwort" name="wort" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <div class="actions"><button class="btn danger" ${state.busy ? 'disabled' : ''}>Konto endgültig löschen</button></div>
+      </form>`;
+  }
+
+  // CSV mit Semikolon und BOM, damit Excel (de-CH) Umlaute und Spalten richtig erkennt
+  async function kontakteCsv() {
+    const [k, n] = await Promise.all([
+      sb.from('kontakte').select('*').order('name'),
+      sb.from('notizen').select('kontakt_id, text, erstellt_am').order('erstellt_am'),
+    ]);
+    if (k.error || n.error) throw k.error || n.error;
+    const D = window.CRM_DATA;
+    const name = (pairs, key) => (pairs.find((p) => p[0] === key) || [])[1] || key || '';
+    const status = (key) => (D.STATUS.find((s) => s.key === key) || {}).name || key || '';
+    const notizen = {};
+    for (const x of n.data) (notizen[x.kontakt_id] ||= []).push(`${fmtDate(x.erstellt_am)}: ${x.text}`);
+    const zelle = (v) => {
+      let s = String(v ?? '');
+      if (/^[=+\-@\t\r]/.test(s) && !/^\+?[0-9 ()/-]+$/.test(s)) s = "'" + s; // keine Formeln in Excel
+      return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const kopf = ['Name', 'Kanal', 'Telefon', 'Woher', 'Status', 'Status seit', 'Typ (geschätzt)', 'Offen fürs Business', 'Follow-up am', 'Follow-up-Notiz', 'Angelegt am', 'Notizen'];
+    const zeilen = k.data.map((c) => [
+      c.name, name(D.KANAL, c.kanal), c.telefon, name(D.HERKUNFT, c.herkunft), status(c.status), fmtDate(c.status_seit),
+      c.typ_geschaetzt ? (D.TYPES[c.typ_geschaetzt] || {}).name || c.typ_geschaetzt : '', c.business_offen ? 'ja' : 'nein',
+      c.follow_up_am ? fmtDate(c.follow_up_am) : '', c.follow_up_notiz, fmtDate(c.erstellt_am), (notizen[c.id] || []).join('\n'),
+    ]);
+    const csv = '﻿' + [kopf, ...zeilen].map((z) => z.map(zelle).join(';')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `kontakte-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return k.data.length;
   }
 
   async function viewTeam() {
@@ -282,6 +345,7 @@
 
   TW.views.profil = { html: viewProfil };
   TW.views.team = { html: viewTeam };
+  TW.views['konto-loeschen'] = { html: viewKontoLoeschen, tab: 'profil' };
 
   // ---------- Darstellen ----------
   let lastHash = null;
@@ -426,6 +490,32 @@
       });
     }
 
+    if (kind === 'konto-loeschen') {
+      if (String(d.wort || '').trim().toUpperCase() !== LOESCHWORT) { say(`Bitte tippe ${LOESCHWORT}, um zu bestätigen.`, true); return render(); }
+      return busy(async () => {
+        const { data } = await sb.auth.getSession();
+        const token = data.session?.access_token;
+        let res;
+        try {
+          res = await fetch(C.kontoLoeschenUrl, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, apikey: C.supabaseAnonKey },
+            body: JSON.stringify({ bestaetigung: LOESCHWORT }),
+          });
+        } catch (_) { say('Keine Verbindung. Bitte prüf dein Internet und versuch es noch einmal.', true); return; }
+        if (!res.ok) {
+          say(res.status === 401 ? 'Bitte melde dich neu an und versuch es dann noch einmal.'
+            : 'Das Löschen hat nicht geklappt. Bitte versuch es später noch einmal oder schreib an academy@tanjawissel.ch.', true);
+          return;
+        }
+        // Konto ist weg: Sitzung nur noch hier im Browser beenden (vorher abmelden, damit kein zweites Neuzeichnen kommt)
+        state.session = null; afterLogout();
+        await sb.auth.signOut({ scope: 'local' }).catch(() => {});
+        say('Dein Konto und alle deine Daten sind gelöscht. Danke, dass du dabei warst.');
+        history.replaceState(null, '', location.pathname + '#/login');
+      });
+    }
+
     if (kind === 'einladen') {
       return busy(async () => {
         const { data, error } = await sb.rpc('einladungscode_erstellen', { p_notiz: String(d.notiz || '').trim() || null });
@@ -444,6 +534,13 @@
     if (act === 'modal-close') { closeModal(); return; }
     if (act === 'anderemail') { state.loginEmail = ''; return go('login'); }
     if (act === 'logout') { await sb.auth.signOut(); afterLogout(); return go('login'); }
+    if (act === 'kontakte-csv') {
+      b.disabled = true;
+      try { const n = await kontakteCsv(); toast(n ? `${n} Kontakte heruntergeladen` : 'Du hast noch keine Kontakte gespeichert'); }
+      catch (e) { console.error(e); toast('Herunterladen hat nicht geklappt. Bitte versuch es noch einmal.'); }
+      b.disabled = false;
+      return;
+    }
     if (act === 'copy-invite') { copyText(b.dataset.text, 'Einladung kopiert'); b.textContent = 'Kopiert ✓'; return; }
     if (act === 'widerrufen') {
       if (!window.confirm('Diesen Einladungscode wirklich widerrufen?')) return;
