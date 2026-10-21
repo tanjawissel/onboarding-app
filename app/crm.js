@@ -280,7 +280,7 @@
       if (!da) return a.follow_up_am.localeCompare(b.follow_up_am);
       return b.geaendert_am.localeCompare(a.geaendert_am);
     });
-    if (!S.kontakte.length) return '<div class="card empty">Trag deinen ersten Kontakt ein. Nur Menschen, die damit einverstanden sind.<div class="actions" style="justify-content:center"><a class="btn" href="#/neu">＋ Kontakt eintragen</a></div></div>';
+    if (!S.kontakte.length) return '<div class="card empty">Trag deinen ersten Kontakt ein. Nur Menschen, die du persönlich kennst.<div class="actions" style="justify-content:center"><a class="btn" href="#/neu">＋ Kontakt eintragen</a></div></div>';
     if (!list.length) return '<div class="card empty">Hier ist gerade niemand.</div>';
     return `<ul class="clist">${list.map((k) => {
       const s = statusOf(k.status);
@@ -357,12 +357,27 @@
     }
   }
 
+  // ---------- Anfangshinweis (einmal pro Partner, entschieden 21.10.2026) ----------
+  // Statt eines Einverständnis-Häkchens bei jedem Kontakt bestätigt der Partner einmal die Regeln.
+  // Gespeichert wird nur der Zeitpunkt (profil.crm_hinweis_am).
+  const hinweisOffen = () => !profil().crm_hinweis_am;
+  const hinweisHtml = (checked, attr) => `<div class="card sand" style="margin:14px 0 4px">
+      <p style="margin-top:0"><b>Bevor du deinen ersten Kontakt einträgst</b></p>
+      <p class="small">Deine Kontakte und Notizen liegen auf einem Server in Frankfurt. Nur du kannst sie lesen, auch deine Sponsorin nicht. Trotzdem gilt: Angaben zur Gesundheit gehören nicht hierher.</p>
+      <label class="check" style="margin-bottom:0"><input type="checkbox" ${attr} ${checked ? 'checked' : ''}><span class="small">Verstanden. Ich trage nur Menschen ein, die ich persönlich kenne, und notiere nur, was ich für unser Gespräch brauche. Keine Gesundheitsangaben (z. B. Beschwerden, für die jemand Patches ausprobiert), nichts über Dritte. Möchte jemand nicht notiert sein, lösche ich den Kontakt.</span></label>
+    </div>`;
+  async function hinweisBestaetigen() {
+    const row = await db(sb.from('profil').update({ crm_hinweis_am: new Date().toISOString() }).eq('id', T.state.session.user.id).select().single());
+    if (row) T.state.profil = row;
+    return !!row;
+  }
+
   // ---------- Kontakt anlegen / bearbeiten ----------
   let F = null; // Formular-Zwischenstand (bleibt erhalten, während die Schätzhilfe offen ist)
   function viewForm(r, k) {
     const editing = !!k;
     if (!F || F._for !== (k ? k.id : 'neu')) {
-      F = k ? Object.assign({}, k, { _for: k.id }) : { _for: 'neu', name: '', herkunft: '', kanal: 'whatsapp', telefon: '', typ_geschaetzt: null, business_offen: false, einverstanden: false, smartship: false };
+      F = k ? Object.assign({}, k, { _for: k.id }) : { _for: 'neu', name: '', herkunft: '', kanal: 'whatsapp', telefon: '', typ_geschaetzt: null, business_offen: false, hinweis: false, smartship: false };
     }
     const opt = (list, val) => list.map(([v, l]) => `<option value="${v}" ${val === v ? 'selected' : ''}>${l}</option>`).join('');
     return `
@@ -385,8 +400,8 @@
         <div class="lock">🔒 Deine persönliche Einschätzung, nur für dich. Sie hilft dir, den richtigen Ton zu treffen, und ist kein Urteil über den Menschen.</div>
         ${editing && F.status === 'kunde' ? `<label class="check"><input type="checkbox" name="smartship" ${F.smartship ? 'checked' : ''}><span>SmartShip (Vorzugskunde)</span></label>` : ''}
         <label class="check"><input type="checkbox" name="business_offen" ${F.business_offen ? 'checked' : ''}><span>Offen für das Business-Thema<br><span class="muted small">Nur dann bietet der Entwurf es an, und auch dann nur, wenn du es dort auswählst.</span></span></label>
-        ${editing ? '' : `<label class="check"><input type="checkbox" name="einverstanden" ${F.einverstanden ? 'checked' : ''}><span>Der Kontakt weiß, dass ich ihn hier notiere, und ist damit einverstanden.</span></label>`}
-        <p class="small muted">Trag nur ein, was du für dein Gespräch brauchst. Keine Gesundheitsangaben (z. B. Beschwerden, für die jemand Patches ausprobiert), keine Infos über Dritte. Löschen kannst du den Kontakt jederzeit, dann ist alles dazu weg.</p>
+        ${!editing && hinweisOffen() ? hinweisHtml(F.hinweis, 'name="hinweis"')
+          : '<p class="small muted">Nur, was du für dein Gespräch brauchst: keine Gesundheitsangaben, nichts über Dritte. Löschen kannst du den Kontakt jederzeit, dann ist alles dazu weg.</p>'}
         <p id="f-err" class="notice warm" hidden></p>
         <div class="actions split">
           ${editing ? '<button type="button" class="btn danger small" data-act="delete">Kontakt löschen</button>' : '<span></span>'}
@@ -401,7 +416,7 @@
     F.typ_geschaetzt = d.get('typ_geschaetzt') || null;
     F.business_offen = d.get('business_offen') === 'on';
     F.smartship = d.get('smartship') === 'on';
-    F.einverstanden = d.get('einverstanden') === 'on';
+    F.hinweis = d.get('hinweis') === 'on';
   }
   const TEL = /^\+?[0-9 ()/-]{4,30}$/;
   function afterForm(r) {
@@ -416,8 +431,10 @@
       const editing = F._for !== 'neu';
       if (!F.name) return fail('Bitte gib einen Namen ein.');
       if (F.telefon && !TEL.test(F.telefon)) return fail('Die Telefonnummer darf nur Ziffern, Leerzeichen, + ( ) / - enthalten.');
-      if (!editing && !F.einverstanden) return fail('Bitte bestätige, dass der Kontakt einverstanden ist.');
+      const confirm = !editing && hinweisOffen();
+      if (confirm && !F.hinweis) return fail('Bitte bestätige einmal den Hinweis oben.');
       const btn = fm.querySelector('button[type=submit]'); btn.disabled = true;
+      if (confirm && !await hinweisBestaetigen()) { btn.disabled = false; return; }
       const fields = { name: F.name, herkunft: F.herkunft || null, kanal: F.kanal || null, telefon: F.telefon || null, typ_geschaetzt: F.typ_geschaetzt, business_offen: F.business_offen };
       if (editing) {
         const k = kontakt(F._for);
@@ -438,11 +455,11 @@
   // ---------- Gespräch dokumentieren ----------
   // Entschieden 20.10.2026 (Variante A): Diktieren über das Mikrofon der Handy-Tastatur.
   // Die App nimmt selbst nichts auf und verarbeitet keine Audiodaten.
-  let REC = null; // { text, kontakt_id, neuName, einverstanden, status, fu }
+  let REC = null; // { text, kontakt_id, neuName, hinweis, status, fu }
   const fuLabel = (d) => d === 1 ? '1 Tag' : d >= 90 ? '3 Monaten' : `${d} Tagen`;
   function viewSprachnotiz(r) {
     if (!REC || REC._hash !== location.hash) {
-      REC = { _hash: location.hash, text: '', kontakt_id: r.params.k || '', neuName: '', einverstanden: false, status: '', fu: 'auto' };
+      REC = { _hash: location.hash, text: '', kontakt_id: r.params.k || '', neuName: '', hinweis: false, status: '', fu: 'auto' };
     }
     const fixed = r.params.k && kontakt(r.params.k);
     const back = fixed ? `#/kontakt/${esc(fixed.id)}` : '#/heute';
@@ -466,7 +483,7 @@
           <select id="r-k" data-rec="kontakt_id"><option value="">– bitte wählen –</option><option value="__neu" ${REC.kontakt_id === '__neu' ? 'selected' : ''}>＋ neuer Kontakt</option>
             ${S.kontakte.slice().sort((a, b) => a.name.localeCompare(b.name)).map((x) => `<option value="${esc(x.id)}" ${REC.kontakt_id === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
           ${REC.kontakt_id === '__neu' ? `<label class="field" for="r-new">Name des neuen Kontakts</label><input type="text" id="r-new" data-rec="neuName" value="${esc(REC.neuName)}" maxlength="80">
-            <label class="check"><input type="checkbox" data-rec="einverstanden" ${REC.einverstanden ? 'checked' : ''}><span>Der Kontakt weiß, dass ich ihn hier notiere, und ist damit einverstanden.</span></label>` : ''}`}
+            ${hinweisOffen() ? hinweisHtml(REC.hinweis, 'data-rec="hinweis"') : ''}` : ''}`}
         <div class="row2">
           <div><label class="field" for="r-status">Status ändern?</label>
             <select id="r-status" data-rec="status">${C.STATUS.map((s) => `<option value="${s.key}" ${selStatus === s.key ? 'selected' : ''}>${s.icon} ${s.name}${s.key === curStatus ? ' (bleibt)' : ''}</option>`).join('')}</select></div>
@@ -502,9 +519,10 @@
     let k;
     if (REC.kontakt_id === '__neu') {
       if (!REC.neuName.trim()) return fail('Bitte gib einen Namen für den neuen Kontakt ein.');
-      if (!REC.einverstanden) return fail('Bitte bestätige, dass der Kontakt einverstanden ist.');
+      if (hinweisOffen() && !REC.hinweis) return fail('Bitte bestätige einmal den Hinweis zu neuen Kontakten.');
     } else if (!kontakt(REC.kontakt_id)) return fail('Bitte wähl einen Kontakt aus.');
     btn.disabled = true;
+    if (REC.kontakt_id === '__neu' && hinweisOffen() && !await hinweisBestaetigen()) { btn.disabled = false; return; }
     if (REC.kontakt_id === '__neu') {
       k = await addKontakt({ name: REC.neuName.trim(), kanal: 'whatsapp' });
       if (!k) { btn.disabled = false; return; }
