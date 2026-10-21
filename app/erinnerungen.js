@@ -118,7 +118,8 @@
     { text: 'Wortstil-Probe machen', href: '#/kompass', done: !!T.state.steckbrief || hat('wortstil_fertig') },
     { text: 'App auf den Home-Bildschirm holen', href: '#/erinnerungen', done: geschafft(HOME) || standalone() },
     { text: 'Erinnerungen einstellen', href: '#/erinnerungen', done: geschafft(EINGESTELLT) },
-    { text: 'Academy: Lektionen 1 bis 4 ansehen', href: C.academyUrl, extern: true, selbst: true, done: geschafft(ACADEMY) },
+    // Noch nicht freigeschaltet: der Pfeil führt ins Profil zum Knopf „Academy freischalten“
+    { text: 'Academy: Lektionen 1 bis 4 ansehen', href: T.state.profil?.academy_seit ? C.academyUrl : '#/profil', extern: !!T.state.profil?.academy_seit, selbst: true, done: geschafft(ACADEMY) },
     { text: 'Deine ersten 3 Kontakte eintragen', href: '#/neu', done: geschafft(KONTAKTE3) || E.kontakte >= 3 },
   ];
 

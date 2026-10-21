@@ -249,7 +249,9 @@
       <div class="card sand">
         <h2>Academy</h2>
         <p>Videos, Spickzettel und Startklar-Checkliste.</p>
-        <div class="actions"><a class="btn secondary small" href="${esc(T.C.academyUrl)}" target="_blank" rel="noopener">Zur Academy</a></div>
+        <div class="actions">${T.state.profil?.academy_seit
+          ? `<a class="btn secondary small" href="${esc(T.C.academyUrl)}" target="_blank" rel="noopener">Zur Academy</a>`
+          : '<a class="btn secondary small" href="#/profil">Academy freischalten</a>'}</div>
       </div>`;
   }
 

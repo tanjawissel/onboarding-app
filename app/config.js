@@ -19,4 +19,7 @@ window.APP_CONFIG = {
   vapidPublicKey: 'BENGYYXuvxBwpcXuQzhdTtbzq8YOdCwBKlACwzvWpA8pG44TmvP3qf-_vsl1dF_wK9sBQZGUtXcwpQubBk2BAJ0',
   appUrl: 'https://app.tanjawissel.ch/',
   academyUrl: 'https://academy.tanjawissel.ch/school/course/start',
+  // Anmeldeseite der Academy (mit „Passwort vergessen?“) und Server-Funktion zum Freischalten
+  academyLoginUrl: 'https://academy.tanjawissel.ch/de/login',
+  academyFreischaltenUrl: 'https://gyybtsuirbnidazusenv.supabase.co/functions/v1/academy',
 };

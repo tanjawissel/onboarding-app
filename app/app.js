@@ -111,6 +111,27 @@
     return out;
   }
 
+  // Karte „Academy“ (Profil). Freischalten legt den Partner mit der Login-E-Mail in systeme.io an.
+  function academyKarte() {
+    if (state.profil?.academy_seit) return `
+      <div class="card sand">
+        <h2>Academy</h2>
+        <p>Videos, Spickzettel und Startklar-Checkliste. Du meldest dich dort mit <strong>${esc(state.session?.user?.email)}</strong> und deinem eigenen Passwort an.</p>
+        <p class="small muted">Erster Besuch? Such die Mail von der Academy (auch im Spam-Ordner) und wähl dort dein Passwort. Passwort vergessen? Auf der Anmeldeseite „Passwort vergessen?“ antippen.</p>
+        <div class="actions split">
+          <a class="btn secondary small" href="${esc(C.academyUrl)}" target="_blank" rel="noopener">Zur Academy</a>
+          <a class="btn ghost small" href="${esc(C.academyLoginUrl)}" target="_blank" rel="noopener">Anmeldeseite</a>
+        </div>
+      </div>`;
+    return `
+      <div class="card sand">
+        <h2>Academy</h2>
+        <p>Videos, Spickzettel und Startklar-Checkliste. Die Academy hat einen eigenen Login und liegt bei systeme.io.</p>
+        <p class="small muted">Wenn du auf „Academy freischalten“ tippst, gibt die App deinen Vornamen und deine E-Mail-Adresse (${esc(state.session?.user?.email)}) an systeme.io weiter. Du bekommst dann eine Mail, in der du dein Passwort wählst. Löschst du dein Konto in der App, wird auch dein Academy-Zugang gelöscht. Mehr in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
+        <div class="actions"><button class="btn small" data-act="academy-freischalten" ${state.busy ? 'disabled' : ''}>Academy freischalten</button></div>
+      </div>`;
+  }
+
   // Schnittstelle für crm.js und kompass.js
   const TW = window.TW = {
     sb, C, state, esc, say, notice, toast, copyText, openModal, closeModal, greeting, fmtDate,
@@ -209,12 +230,10 @@
         <div class="t-label">🔔 Erinnerungen</div>
         <div class="t-sub">Push, E-Mail, Uhrzeit, Ruhetage und Kalender</div>
       </a>
+      <div id="academy">${academyKarte()}</div>
       <div class="card">
         <p class="muted small">Angemeldet als <strong>${esc(state.session?.user?.email)}</strong></p>
-        <div class="actions split">
-          <a class="btn secondary small" href="${esc(C.academyUrl)}" target="_blank" rel="noopener">Academy</a>
-          <button class="btn ghost small" data-act="logout">Abmelden</button>
-        </div>
+        <div class="actions"><button class="btn ghost small" data-act="logout">Abmelden</button></div>
       </div>
       <p class="muted small"><a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a> · <a href="#/konto-loeschen">Konto löschen</a></p>`;
   }
@@ -234,6 +253,7 @@
           <li>dein Freiheits-Kompass, deine Ziele, dein Rahmen und dein Wortstil-Steckbrief</li>
           <li>deine 3 Schritte, Meilensteine, Erinnerungen, Push und das Kalender-Abo</li>
           <li>deine Einladungscodes, die noch niemand eingelöst hat</li>
+          <li>dein Zugang zur Academy bei systeme.io</li>
         </ul>
         <p>Die Personen, die du ins Team geholt hast, behalten ihr Konto. Sie gehören dann direkt zu der Person, die dich eingeladen hat. Was sie dir freigegeben hatten, ist danach wieder privat.</p>
         <p class="muted small">Das Löschen lässt sich nicht rückgängig machen. Dein Konto bei Superpatch selbst bleibt davon unberührt.</p>
@@ -542,6 +562,29 @@
       catch (e) { console.error(e); toast('Herunterladen hat nicht geklappt. Bitte versuch es noch einmal.'); }
       b.disabled = false;
       return;
+    }
+    if (act === 'academy-freischalten') {
+      return busy(async () => {
+        const { data } = await sb.auth.getSession();
+        let res, out = {};
+        try {
+          res = await fetch(C.academyFreischaltenUrl, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', authorization: 'Bearer ' + data.session?.access_token, apikey: C.supabaseAnonKey },
+            body: '{}',
+          });
+          out = await res.json().catch(() => ({}));
+        } catch (_) { say('Keine Verbindung. Bitte prüf dein Internet und versuch es noch einmal.', true); return; }
+        if (!res.ok || !out.academy_seit) {
+          say(res.status === 401 ? 'Bitte melde dich neu an und versuch es dann noch einmal.'
+            : res.status === 503 ? 'Die Academy ist noch nicht mit der App verbunden. Bitte versuch es später noch einmal.'
+            : 'Die Academy hat gerade nicht geantwortet. Bitte versuch es gleich noch einmal oder schreib an academy@tanjawissel.ch.', true);
+          return;
+        }
+        state.profil = { ...state.profil, academy_seit: out.academy_seit };
+        say(out.neu ? 'Deine Academy ist freigeschaltet. Du bekommst gleich eine Mail von der Academy, darin wählst du dein Passwort. Schau auch im Spam-Ordner nach.'
+          : 'Deine Academy ist freigeschaltet. Du hattest schon einen Zugang: Melde dich mit deinem Passwort an oder tipp auf der Anmeldeseite auf „Passwort vergessen?“.');
+      });
     }
     if (act === 'copy-invite') { copyText(b.dataset.text, 'Einladung kopiert'); b.textContent = 'Kopiert ✓'; return; }
     if (act === 'widerrufen') {
