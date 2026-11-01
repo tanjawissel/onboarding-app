@@ -208,6 +208,9 @@
       <span class="due">seit ${kurz(a.erstellt_am)} · <button type="button" class="linklike" data-act="er-geraet-weg" data-id="${esc(a.id)}">Entfernen</button></span>
     </div></div></li>`).join('')}</ul>`;
   }
+  // Kalender-Abo vorerst aus (Verknüpfung funktionierte nicht, 01.11.2026). Auf true setzen = wieder an.
+  const KALENDER_AN = false;
+
   function kalenderBlock() {
     const knopf = '<button type="button" class="btn small" data-act="er-kal-hinzu">Zu meinem Kalender hinzufügen</button>';
     if (!E.kalSeit) return `<div class="actions">${knopf}</div>`;
@@ -244,12 +247,12 @@
         <p class="small muted" style="margin-bottom:4px">Keine Erinnerung, keine Kalendereinträge.</p>
         <div class="tage">${WT.map((t, i) => `<label class="tag"><input type="checkbox" name="ruhetag" value="${i + 1}" ${(e.ruhetage || []).includes(i + 1) ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>
 
-        <h3>Kalender</h3>
+        ${KALENDER_AN ? `<h3>Kalender</h3>
         <p class="small">Deine Aufgaben auch im eigenen Kalender sehen. Ohne Zugriff auf deinen Kalender: Die App liefert nur Einträge dazu.</p>
         ${radio('kalender_modus', 'tag', 'Jeden Tag ein Eintrag mit deiner Tagesaufgabe', e.kalender_modus !== 'woche')}
         ${radio('kalender_modus', 'woche', 'Einmal pro Woche eine Wochenübersicht (montags)', e.kalender_modus === 'woche')}
         ${kalenderBlock()}
-        <p class="small muted">Kalender holen Neues nur alle paar Stunden, Google manchmal erst nach einem Tag. Abhaken geht in der App.</p>
+        <p class="small muted">Kalender holen Neues nur alle paar Stunden, Google manchmal erst nach einem Tag. Abhaken geht in der App.</p>` : ''}
 
         ${E.partner ? `<h3>Für dein Team</h3>
         <label class="check"><input type="checkbox" name="sponsor_push" ${e.sponsor_push ? 'checked' : ''}>

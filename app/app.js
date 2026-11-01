@@ -228,7 +228,7 @@
       </form>
       <a class="tile" href="#/erinnerungen" style="margin-bottom:16px">
         <div class="t-label">🔔 Erinnerungen</div>
-        <div class="t-sub">Push, E-Mail, Uhrzeit, Ruhetage und Kalender</div>
+        <div class="t-sub">Push, E-Mail, Uhrzeit und Ruhetage</div>
       </a>
       <div id="academy">${academyKarte()}</div>
       <div class="card">
