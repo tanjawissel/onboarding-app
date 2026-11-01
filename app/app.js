@@ -1,5 +1,5 @@
 // Kern der App: Login per E-Mail (Link oder 6-stelliger Code), Einladung annehmen,
-// Profil und Team (Partner einladen, Sponsor-Ansicht). CRM (crm.js) und Kompass (kompass.js)
+// Profil und Team (Partner einladen, Sponsor-Ansicht, Mein Coach). CRM (crm.js) und Kompass (kompass.js)
 // hängen sich über window.TW ein. Daten liegen in Supabase (Frankfurt), geschützt durch
 // Row Level Security: Jede Abfrage sieht nur die eigenen Zeilen.
 (() => {
@@ -21,6 +21,7 @@
     loginEmail: '',
     einladung: '',        // Code aus ?einladung=…
     neuerCode: null,      // gerade erzeugter Einladungscode (nur einmal sichtbar)
+    coachWahl: false,     // Auswahlliste „Coach wechseln“ offen
     msg: null,            // { text, warm }
     busy: false,
   };
@@ -230,6 +231,10 @@
         <div class="t-label">🔔 Erinnerungen</div>
         <div class="t-sub">Push, E-Mail, Uhrzeit und Ruhetage</div>
       </a>
+      <a class="tile" href="#/coach" style="margin-bottom:16px">
+        <div class="t-label">🤝 Mein Coach</div>
+        <div class="t-sub">Eine Person aus deiner Linie über deinem Sponsor, mit der du dein Profil teilen kannst</div>
+      </a>
       <div id="academy">${academyKarte()}</div>
       <div class="card">
         <p class="muted small">Angemeldet als <strong>${esc(state.session?.user?.email)}</strong></p>
@@ -304,12 +309,14 @@
 
   async function viewTeam() {
     const myId = state.session.user.id;
-    const [partner, codes, ansicht] = await Promise.all([
+    const [partner, codes, ansicht, coachees] = await Promise.all([
       sb.rpc('meine_partner'),
       sb.from('einladungscodes').select('id, notiz, max_nutzungen, genutzt, gueltig_bis, widerrufen_am, erstellt_am').order('erstellt_am', { ascending: false }).limit(20),
       // RLS: eigene Zeile (Vorschau) und die der DIREKTEN Partner
       sb.from('sponsor_ansicht').select('owner_id, ziele, fuehrung, rahmen, aktualisiert_am').neq('owner_id', myId),
+      sb.rpc('meine_coachees'),
     ]);
+    const coachList = coachees.data || [];
     const list = partner.data || [];
     const byOwner = Object.fromEntries((ansicht.data || []).map((a) => [a.owner_id, a]));
     const now = Date.now();
@@ -357,6 +364,11 @@
         : '<p class="empty">Noch keine Partner. Sobald jemand deinen Code einlöst, steht die Person hier.</p>'}
         <p class="muted small">Du siehst hier nur Vornamen und das, was deine Partner selbst freigeben: Ziele, Führungshinweise und Rahmen. Kontakte und Typ deiner Partner siehst du nie.</p>
       </div>
+      ${coachList.length ? `<div class="card">
+        <h2>Ich bin Coach für</h2>
+        <ul class="clist">${coachList.map(coacheeItem).join('')}</ul>
+        <p class="muted small">Diese Partner aus deiner Linie haben dich als Coach gewählt. Du siehst nur, was sie dir selbst freigeben.</p>
+      </div>` : ''}
       ${offen.length ? `<div class="card">
         <h2>Meine offenen Einladungscodes</h2>
         <ul class="clist">${offen.map((c) => `<li><a><div class="c-top"><span class="c-name">${esc(c.notiz || 'ohne Notiz')}</span>
@@ -365,8 +377,83 @@
       </div>` : ''}`;
   }
 
+  // „Mein Coach“: eine Person aus der Upline über dem direkten Sponsor. Wählen, Wechseln und
+  // Prüfen der Linie macht der Server (coach_waehlen). Eigene Schalter, Start aus.
+  const COACH_SCHALTER = [
+    ['coach_ziele', 'Ziele', 'WARUM, 12-Monats-Ziel, Kunden- und Partnerziel, Wachstumsziel'],
+    ['coach_fuehrung', 'Führungshinweise', 'So begleitet dein Coach dich, Frühwarnzeichen, passendes Tempo (ohne Typnamen)'],
+    ['coach_rahmen', 'Rahmen', 'Zeit, Energie, Kanäle, Lernstil, dein 30-Tage-Erkennungszeichen und deine Hänger-Absprache (ohne deine Notiz an den Sponsor)'],
+  ];
+  const ebeneText = (n) => n ? `${n} Ebenen über dir` : 'in deiner Linie';
+
+  async function viewCoach() {
+    const [mc, up, fr] = await Promise.all([
+      sb.rpc('mein_coach'),
+      sb.rpc('meine_upline'),
+      sb.from('freigaben').select('coach_ziele, coach_fuehrung, coach_rahmen').maybeSingle(),
+    ]);
+    const fehler = mc.error || up.error || fr.error;
+    const coach = (mc.data || [])[0];
+    const upline = up.data || [];
+    const f = fr.data || {};
+    const auswahl = () => upline.length
+      ? `<ul class="clist">${upline.map((u) => `<li><div class="c-item"><div class="c-top"><span class="c-name">${esc(u.vorname || 'ohne Namen')}</span>
+          <span class="due">${esc(ebeneText(u.ebene))}</span></div>
+          <div class="c-sub">${coach && coach.id === u.id ? 'dein Coach'
+            : `<button class="btn secondary small" data-act="coach-waehlen" data-id="${esc(u.id)}" data-name="${esc(u.vorname || '')}" ${state.busy ? 'disabled' : ''}>Als Coach wählen</button>`}</div></div></li>`).join('')}</ul>`
+      : '<p class="empty">In deiner Linie gibt es über deinem Sponsor noch niemanden in der App.</p>';
+    const sw = ([key, title, desc]) => `
+      <div class="toggle"><div><strong>${title}</strong><br><span class="muted small">${desc}</span></div>
+        <label class="switch"><input type="checkbox" data-coach-share="${key}" ${f[key] ? 'checked' : ''} aria-label="${title} für den Coach freigeben"><span class="slider"></span></label></div>`;
+    return `
+      <h1>Mein Coach</h1>
+      ${notice()}
+      ${fehler ? '<p class="notice warm">Das konnte gerade nicht geladen werden. Bitte lade die Seite neu.</p>' : ''}
+      <div class="card">
+        <p>Neben deinem Sponsor kannst du dir eine Person aus deiner Linie weiter oben als Coach wählen, zum Beispiel für einen zweiten Blick von außen.</p>
+        <p class="muted small">Dein Coach sieht nur, was du hier freigibst. Dein Sponsor erfährt nicht, wen du gewählt hast. Du kannst deinen Coach jederzeit wechseln oder entfernen, und dein Coach kann das Coaching auch selbst beenden.</p>
+      </div>
+      ${coach ? `
+      <div class="card">
+        <h2>${esc(coach.vorname || 'Dein Coach')}</h2>
+        <p class="muted small">${esc(ebeneText(coach.ebene))} · dein Coach seit ${fmtDate(coach.seit)}</p>
+        <h3>Mit meinem Coach teilen</h3>
+        ${COACH_SCHALTER.map(sw).join('')}
+        <div class="actions split">
+          <button class="btn secondary small" data-act="coach-wechseln">Coach wechseln</button>
+          <button class="btn ghost small" data-act="coach-entfernen">Coach entfernen</button>
+        </div>
+      </div>
+      ${state.coachWahl ? `<div class="card"><h2>Neuen Coach wählen</h2>
+        <p class="muted small">Beim Wechsel gehen alle Schalter aus. Du gibst für die neue Person bewusst neu frei.</p>
+        ${auswahl()}
+        <div class="actions"><button class="btn ghost small" data-act="coach-abbrechen">Abbrechen</button></div></div>` : ''}
+      <div class="sponsor-view">
+        <div class="eyebrow">Vorschau · Das sieht dein Coach</div>
+        ${coach.ziele || coach.fuehrung || coach.rahmen ? TW.sponsorAnsichtHtml ? TW.sponsorAnsichtHtml(coach, state.profil?.vorname) : ''
+          : '<p class="empty">Noch nichts freigegeben. Dein Coach sieht im Moment nichts aus deinem Profil.</p>'}
+        <p class="muted small" style="margin-top:12px">Typ, Antriebe, Kontakte und Meilensteine sind nie Teil der Freigabe.</p>
+      </div>`
+      : `<div class="card"><h2>Coach wählen</h2>
+        <p class="muted small">Zur Auswahl stehen alle, die in deiner Linie über deinem Sponsor stehen und die App nutzen. Danach ist erst einmal nichts freigegeben.</p>
+        ${auswahl()}</div>`}
+      <p style="margin-top:12px"><a class="linklike small" href="#/profil">← Zurück zum Profil</a></p>`;
+  }
+
+  // Team › „Ich bin Coach für“: Partner aus der Downline, die mich gewählt haben
+  const coacheeItem = (p) => {
+    const frei = p.ziele || p.fuehrung || p.rahmen;
+    return `<li><div class="c-item"><div class="c-top"><span class="c-name">${esc(p.vorname || 'ohne Namen')}</span>
+      <span class="due">seit ${fmtDate(p.seit)}</span></div>
+      ${frei && TW.sponsorAnsichtHtml ? `<details class="partner-ansicht"><summary class="small">Freigegebenes Profil ansehen</summary>
+        <div class="sponsor-view">${TW.sponsorAnsichtHtml(p, p.vorname)}</div></details>`
+      : '<div class="c-sub">Noch nichts freigegeben.</div>'}
+      <div class="c-sub"><button class="linklike" data-act="coaching-beenden" data-id="${esc(p.id)}" data-name="${esc(p.vorname || '')}">Coaching beenden</button></div></div></li>`;
+  };
+
   TW.views.profil = { html: viewProfil };
   TW.views.team = { html: viewTeam };
+  TW.views.coach = { html: viewCoach, tab: 'profil' };
   TW.views['konto-loeschen'] = { html: viewKontoLoeschen, tab: 'profil' };
 
   // ---------- Darstellen ----------
@@ -593,12 +680,51 @@
       say(error ? 'Widerrufen hat nicht geklappt.' : 'Code widerrufen.', !!error);
       return render();
     }
+    if (act === 'coach-wechseln') { state.coachWahl = true; return render(); }
+    if (act === 'coach-abbrechen') { state.coachWahl = false; return render(); }
+    if (act === 'coach-waehlen') {
+      const name = b.dataset.name || 'Diese Person';
+      return busy(async () => {
+        const { error } = await sb.rpc('coach_waehlen', { p_coach: b.dataset.id });
+        if (error) { say('Das hat nicht geklappt. Bitte lade die Seite neu und versuch es noch einmal.', true); return; }
+        state.coachWahl = false;
+        say(`${name} ist jetzt dein Coach. Noch ist nichts freigegeben: Du entscheidest unten, was ${name} sehen darf.`);
+      });
+    }
+    if (act === 'coach-entfernen') {
+      if (!window.confirm('Coach wirklich entfernen? Die Person sieht danach nichts mehr aus deinem Profil.')) return;
+      return busy(async () => {
+        const { error } = await sb.rpc('coach_entfernen');
+        state.coachWahl = false;
+        say(error ? 'Entfernen hat nicht geklappt.' : 'Dein Coach ist entfernt.', !!error);
+      });
+    }
+    if (act === 'coaching-beenden') {
+      if (!window.confirm(`Coaching für ${b.dataset.name || 'diese Person'} wirklich beenden? Du siehst danach nichts mehr aus dem Profil.`)) return;
+      return busy(async () => {
+        const { error } = await sb.rpc('coaching_beenden', { p_partner: b.dataset.id });
+        say(error ? 'Beenden hat nicht geklappt.' : 'Coaching beendet.', !!error);
+      });
+    }
+  });
+
+  // Schalter „Mit meinem Coach teilen“
+  document.addEventListener('change', async (ev) => {
+    const t = ev.target;
+    const key = t.dataset && t.dataset.coachShare;
+    if (!key) return;
+    t.disabled = true;
+    const { error } = await sb.from('freigaben').update({ [key]: t.checked }).eq('owner_id', state.session.user.id).select().single();
+    if (error) { t.checked = !t.checked; toast('Speichern hat nicht geklappt. Bitte versuch es noch einmal.'); t.disabled = false; return; }
+    toast('Gespeichert');
+    render(); // Vorschau neu
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.innerHTML) closeModal(); });
 
   window.addEventListener('hashchange', () => {
     const r = parseRoute();
     if (r.name !== 'team') state.neuerCode = null;
+    if (r.name !== 'coach') state.coachWahl = false;
     if (modalRoot.innerHTML) closeModal();
     window.scrollTo(0, 0);
     TW.onRoute.forEach((f) => f(r));
