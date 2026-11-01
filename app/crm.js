@@ -61,15 +61,17 @@
       sb.from('entwuerfe').select('*'),
       sb.from('prioritaeten').select('*').gte('datum', since),
       sb.from('wortstil_steckbrief').select('steckbrief').maybeSingle(),
+      sb.from('wortstil_muster').select('id, text, erstellt_am').order('erstellt_am', { ascending: false }),
     ]);
     const bad = res.find((r) => r.error);
     if (bad) throw bad.error;
-    const [k, n, v, e, p, sbf] = res.map((r) => r.data);
+    const [k, n, v, e, p, sbf, mu] = res.map((r) => r.data);
     S = { kontakte: k.map(normK), notizen: n.map(normN), verlauf: v.map(normV), entwuerfe: e.map(normN), prioritaeten: p.map(normP) };
     T.state.steckbrief = sbf ? sbf.steckbrief : null;
+    T.state.muster = mu || [];
   }
   T.onLogin.push(load);
-  T.onLogout.push(() => { S = empty(); DR = null; F = null; REC = null; listSearch = ''; T.state.steckbrief = null; });
+  T.onLogout.push(() => { S = empty(); DR = null; F = null; REC = null; listSearch = ''; T.state.steckbrief = null; T.state.muster = []; });
 
   const kontakt = (id) => S.kontakte.find((k) => k.id === id);
   const putK = (row) => { const k = normK(row); const i = S.kontakte.findIndex((x) => x.id === k.id); if (i >= 0) S.kontakte[i] = k; else S.kontakte.push(k); return k; };
@@ -119,6 +121,7 @@
     switch (k.follow_up_art) {
       case 'erstkontakt': return `${n} kontaktieren`;
       case 'einladung_test': return `${n} zum Test einladen`;
+      case 'gespraech_auswertung': return `${n}: Gespräch zur Auswertung vereinbaren`;
       case 'einladung_ausprobieren': return `${n} zum Ausprobieren einladen`;
       case 'danke_pflege': return `${n}: Danke & Kundenpflege`;
       case 'sonstiges': return `${n}: ${k.follow_up_notiz || 'melden'}`;
@@ -547,6 +550,7 @@
   const AI_ERRORS = {
     not_signed_in: 'Deine Anmeldung ist abgelaufen. Bitte melde dich neu an.',
     rate_limited: 'Gerade sind es zu viele Anfragen. Versuch es in ein paar Minuten nochmal.',
+    daily_limit: 'Für heute sind deine KI-Entwürfe aufgebraucht (50 pro Tag). Morgen geht es weiter. Bis dahin kannst du den Entwurf selbst anpassen.',
     refused: 'Die KI konnte dazu nichts schreiben. Versuch es nochmal oder schreib selbst.',
     network: 'Keine Verbindung zum Server. Prüf deine Internetverbindung.',
     server_config: 'Die KI ist gerade nicht richtig eingerichtet. Gib Tanja bitte kurz Bescheid.',
@@ -567,11 +571,32 @@
     return S.notizen.filter((n) => n.kontakt_id === k.id).sort((a, b) => b.erstellt_am.localeCompare(a.erstellt_am)).slice(0, 3)
       .map((n) => (hide ? n.text.replace(hide, '$1[Name]') : n.text).slice(0, 600));
   }
+  // Musternachrichten (max. 3, die Datenbank löscht das älteste): Vorname des Kontakts → [Name], eigener Link → [Link]
+  const MUSTER_MAX = 3;
+  function musterText(k, text) {
+    let t = String(text || '').trim();
+    const link = profil().superpatch_link;
+    if (link) t = t.split(link).join('[Link]');
+    const fn = k && firstName(k.name);
+    if (fn && fn !== '[Name]' && fn.length >= 2) {
+      t = t.replace(new RegExp(`(^|[^\\p{L}])(${fn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(?![\\p{L}])`, 'giu'), '$1[Name]');
+    }
+    return t.slice(0, 600);
+  }
+  async function saveMuster(k, text) {
+    const t = musterText(k, text);
+    if (!t) return false;
+    if ((T.state.muster || []).some((m) => m.text === t)) { toast('Diese Nachricht ist schon ein Muster.'); return false; }
+    const row = await db(sb.from('wortstil_muster').insert({ text: t }).select('id, text, erstellt_am').single());
+    if (!row) return false;
+    T.state.muster = [row, ...(T.state.muster || [])].slice(0, MUSTER_MAX);
+    return true;
+  }
   // opts: { fresh: true } ignoriert den Zwischenspeicher, { feedback } für „Was soll anders sein?“
   async function generate(k, opts) {
     const o = opts || {};
     const key = `${DR.art}|${DR.business ? 1 : 0}`;
-    DR.error = '';
+    DR.error = ''; DR.kiText = '';
     if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); render(); return; }
     if (!aiReady()) {
       DR.text = buildDraft(k, DR.art, DR.business); DR.source = 'beispiel'; DR.loading = false;
@@ -586,6 +611,7 @@
       const out = await T.callWortstil({
         action: 'crm_entwurf', art: DR.art, typ: k.typ_geschaetzt || null,
         profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business,
+        muster: (T.state.muster || []).slice(0, MUSTER_MAX).map((m) => m.text),
         previous: o.feedback ? previous : undefined, feedback: o.feedback || undefined,
       });
       if (!out.text) error = 'upstream_error'; else text = out.text;
@@ -597,8 +623,8 @@
       // Bei einem neuen Versuch bleibt der bisherige Text stehen, sonst gibt es den Beispielentwurf.
       if (!previous) { DR.text = buildDraft(k, DR.art, DR.business); DR.source = 'beispiel'; }
     } else {
-      DR.text = fillPlaceholders(k, text); DR.source = 'ki';
-      DR.cache[key] = { text: DR.text, source: DR.source };
+      DR.text = fillPlaceholders(k, text); DR.source = 'ki'; DR.kiText = DR.text;
+      DR.cache[key] = { text: DR.text, source: DR.source, kiText: DR.kiText };
     }
     if (T.route().name === 'entwurf') render();
   }
@@ -626,7 +652,7 @@
       ${needsLink ? '<p class="notice warm">Trag im <a href="#/profil">Profil</a> „Mein Superpatch-Link“ ein, dann steht er direkt im Entwurf.</p>' : ''}
       ${aiReady() ? '' : `<div class="card sand">
         <p style="margin-top:0"><b>Entwürfe von der KI in deinem Ton?</b></p>
-        <p class="small">Dafür gehen dein Steckbrief, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zu diesem Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts. Du kannst das im Profil jederzeit wieder ausschalten.</p>
+        <p class="small">Dafür gehen dein Steckbrief, deine Musternachrichten, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zu diesem Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts. Du kannst das im Profil jederzeit wieder ausschalten.</p>
         <div class="actions" style="margin-top:6px"><button class="btn small" data-act="ki-on" ${off}>KI-Entwürfe einschalten</button></div></div>`}
       ${k.business_offen ? `<label class="check"><input type="checkbox" data-act="business" ${DR.business ? 'checked' : ''} ${off}><span>Business-Thema erwähnen <span class="muted small">(nur weil du es beim Kontakt freigeschaltet hast)</span></span></label>` : ''}
       <label class="field" for="d-text">Entwurf <span class="opt">(bearbeitbar)</span></label>
@@ -638,7 +664,10 @@
         <button class="btn secondary small" data-act="retry" ${off}>↻ Neuer Versuch</button>
         <button class="btn secondary small" data-act="feedback" ${off}>✎ Was soll anders sein?</button>
         <button class="btn secondary small" data-act="remember" ${off}>☆ Merken</button>
+        <button class="btn secondary small" data-act="muster-add" ${off}>★ Als Muster merken</button>
       </div>
+      <p id="muster-tipp" class="notice warm small" ${DR.kiText && DR.text.trim() !== DR.kiText.trim() ? '' : 'hidden'}>Du hast den Entwurf angepasst. Merk dir deine Version als Muster, dann klingt der nächste Entwurf mehr nach dir.</p>
+      ${musterCard()}
       <div class="btn-grid" style="margin-top:16px">
         <button class="btn" data-act="copy" ${off}>📋 Kopieren</button>
         ${DR.loading ? '<button class="btn olive" disabled>WhatsApp</button>'
@@ -646,12 +675,24 @@
       </div>
       <p class="small muted" style="text-align:center;margin-top:10px">Du verschickst die Nachricht selbst. Die App versendet nie.</p>`;
   }
+  function musterCard() {
+    const list = T.state.muster || [];
+    return `<details class="card" style="margin-top:12px">
+      <summary><b>Meine Musternachrichten (${list.length}/${MUSTER_MAX})</b></summary>
+      <p class="small muted">Echte Nachrichten von dir, an denen die KI deinen Ton ablesen kann. Gespeichert werden höchstens ${MUSTER_MAX}; eine neue ersetzt die älteste. Namen von Kontakten werden durch [Name] ersetzt.</p>
+      ${list.length ? `<ul class="muster-list">${list.map((m) => `<li><span class="note">„${esc(m.text)}“</span> <button class="btn ghost small" data-act="muster-del" data-id="${esc(m.id)}" aria-label="Muster löschen">✕</button></li>`).join('')}</ul>`
+        : '<p class="small">Noch keine. Schreib eine Nachricht, wie du sie wirklich verschicken würdest, oder merk dir einen angepassten Entwurf.</p>'}
+      <div class="actions"><button class="btn secondary small" data-act="muster-new">+ Eigene Nachricht eintragen</button></div>
+    </details>`;
+  }
   function afterEntwurf(r) {
     if (DR && DR._new) { DR._new = false; const k = kontakt(r.id); if (k) generate(k); return; }
     const ta = document.getElementById('d-text');
     if (!ta) return;
     ta.addEventListener('input', () => {
       DR.text = ta.value;
+      const tipp = document.getElementById('muster-tipp');
+      if (tipp) tipp.hidden = !(DR.kiText && DR.text.trim() !== DR.kiText.trim());
       const wa = document.querySelector('[data-act=wa]');
       if (wa) wa.href = wa.href.split('?')[0] + '?text=' + encodeURIComponent(DR.text);
     });
@@ -937,6 +978,30 @@
           if (row) { S.entwuerfe.push(normN(row)); toast('Entwurf gemerkt'); }
         });
       }
+      case 'muster-add': {
+        if (!DR.text.trim()) return;
+        return once(async () => {
+          if (await saveMuster(k, DR.text)) { DR.kiText = DR.text; toast('Als Muster gemerkt. Der nächste Entwurf lernt davon.'); render(); }
+        });
+      }
+      case 'muster-new': {
+        M = { type: 'muster', k };
+        openModal(`<h2>Eigene Musternachricht</h2>
+          <p class="small muted">Schreib eine Nachricht so, wie du sie wirklich verschicken würdest, z. B. wie du jemandem vom Test erzählst. Bitte keine echten Namen.</p>
+          <textarea id="m-muster" maxlength="600" rows="5"></textarea>
+          <div class="actions split"><button class="btn ghost" data-act="modal-close">Abbrechen</button><button class="btn" data-act="muster-save">Speichern</button></div>`);
+        return;
+      }
+      case 'muster-save': {
+        const text = document.getElementById('m-muster').value.trim();
+        if (!text) return;
+        const mk = M.k;
+        return once(async () => { if (await saveMuster(mk, text)) { closeModal(); toast('Muster gespeichert'); render(); } });
+      }
+      case 'muster-del': return once(async () => {
+        if (!await db(sb.from('wortstil_muster').delete().eq('id', el.dataset.id))) return;
+        T.state.muster = (T.state.muster || []).filter((m) => m.id !== el.dataset.id); render();
+      });
       case 'copy': T.copyText(DR.text, 'Kopiert. Jetzt selbst verschicken.'); afterSent(k, 'kopiert'); return;
       case 'wa': setTimeout(() => afterSent(k, 'whatsapp'), 300); return; // Link öffnet WhatsApp in neuem Tab
     }

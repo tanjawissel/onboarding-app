@@ -7,7 +7,7 @@ window.CRM_DATA = (function () {
     { key: 'neu',             icon: '🌱', name: 'Neu',                 text: 'eingetragen, noch nicht angesprochen', fu: null, art: 'erstkontakt' },
     { key: 'angesprochen',    icon: '💬', name: 'Angesprochen',        text: 'Erstkontakt verschickt',                fu: 7,    art: 'nachfassen' },
     { key: 'test_eingeladen', icon: '🔗', name: 'Zum Test eingeladen', text: 'Link zum Test geschickt',               fu: 7,    art: 'nachfassen' },
-    { key: 'test_gemacht',    icon: '📋', name: 'Test gemacht',        text: 'Mail von Superpatch: Test gemacht',     fu: 1,    art: 'einladung_ausprobieren' },
+    { key: 'test_gemacht',    icon: '📋', name: 'Test gemacht',        text: 'Mail von Superpatch: Test gemacht',     fu: 1,    art: 'gespraech_auswertung' },
     { key: 'probiert',        icon: '🧪', name: 'Probiert',            text: 'hat einen Testpatch',                   fu: 7,    art: 'nachfassen' },
     { key: 'kunde',           icon: '🛒', name: 'Kunde',               text: 'hat bestellt',                          fu: 14,   art: 'danke_pflege' },
     { key: 'partner',         icon: '🤝', name: 'Partner',             text: 'ist selbst als Kundenpromoter dabei',   fu: null, art: 'nachfassen' },
@@ -18,6 +18,7 @@ window.CRM_DATA = (function () {
   const ARTS = [
     { key: 'erstkontakt',            name: 'Erstkontakt',               short: 'Erstkontakt',   next: 'angesprochen' },
     { key: 'einladung_test',         name: 'Einladung zum Test',        short: 'Einladung Test', next: 'test_eingeladen' },
+    { key: 'gespraech_auswertung',   name: 'Gespräch zur Auswertung',   short: 'Auswertung',    next: null },
     { key: 'einladung_ausprobieren', name: 'Zum Ausprobieren einladen', short: 'Ausprobieren',  next: null },
     { key: 'nachfassen',             name: 'Nachfassen',                short: 'Nachfassen',    next: null },
     { key: 'danke_pflege',           name: 'Danke & Kundenpflege',      short: 'Danke & Pflege', next: null },
@@ -39,11 +40,11 @@ window.CRM_DATA = (function () {
   // Feste Regeln: keine Krankheiten/Beschwerden, keine Preise, keine Patch-Anzahl, keine 7er-Probierpakete, kein Druck.
   const DRAFTS = {
     erstkontakt: {
-      pfeil:    'Hey {name} 😊 ich teste gerade etwas Neues und bin selbst gespannt. Willst du’s dir kurz ansehen?',
-      funke:    'Hey {name}! Du glaubst nicht, was ich am Wochenende ausprobiert habe 😄 Das musst du auch mal testen! Hast du diese Woche kurz Zeit zum Quatschen?',
-      anker:    'Hey {name} 😊 wie geht’s dir? Ist schon eine Weile her. Ich habe etwas für mich entdeckt und musste an dich denken. Ganz in Ruhe, nur falls es dich interessiert. LG',
-      kristall: 'Hallo {name} 😊 ich beschäftige mich gerade mit einer neuen Technologie. Dazu gibt es einen kurzen Test, anonym und in etwa 5 Minuten, dann kannst du dir selbst ein Bild machen. Magst du?',
-      neutral:  'Hey {name} 😊 ich habe vor Kurzem etwas Neues ausprobiert, das mir echt gefällt, und musste an dich denken. Magst du hören, was es ist?',
+      pfeil:     'Hey {name} 😊 ich beschäftige mich gerade mit etwas Neuem und bin selbst gespannt. Hast du Lust, einen kurzen Test dazu zu machen?',
+      funke:     'Hey {name}! 😄 Lange nichts gehört. Ich bin gerade bei etwas Neuem dabei und finde es spannend. Magst du mal einen kurzen Test dazu machen?',
+      anker:     'Hey {name} 😊 wie geht’s dir? Ist schon eine Weile her. Ich beschäftige mich gerade mit etwas Neuem. Ganz in Ruhe, nur falls es dich interessiert: Hättest du Lust auf einen kurzen Test dazu?',
+      kristall:  'Hallo {name} 😊 ich beschäftige mich gerade mit etwas Neuem. Dazu gibt es einen kurzen, anonymen Test, dann kannst du dir selbst ein Bild machen. Hättest du Lust?',
+      neutral:   'Hey {name} 😊 ich beschäftige mich gerade mit etwas Neuem. Hättest du Lust, einen kurzen, anonymen Test dazu zu machen?',
     },
     einladung_test: {
       pfeil:    'Hey {name}, hier der Link zum Test, dauert ca. 5 Minuten und ist anonym: {link}\nTrag am Ende deine E-Mail ein, dann bekommst du dein Ergebnis zugeschickt und ich sehe, dass du fertig bist 😊',
@@ -51,6 +52,13 @@ window.CRM_DATA = (function () {
       anker:    'Hey {name} 😊 danke, dass du offen dafür bist. Hier ist der kleine Test, ganz in Ruhe, wann es dir passt (ca. 5 Minuten, anonym): {link}\nWenn du magst, trag am Ende deine E-Mail ein. Dann bekommst du dein Ergebnis zugeschickt, ich sehe, dass du ihn gemacht hast, und wir können zusammen draufschauen.',
       kristall: 'Hallo {name}, hier der Link zum Test (ca. 5 Minuten, anonym): {link}\nAm Ende siehst du deinen Signalscore und welche Art von Patches Superpatch dir empfiehlt. Wenn du deine E-Mail einträgst, bekommst du die Auswertung zugeschickt und ich eine kurze Info. Dann erkläre ich dir gern die Hintergründe. LG',
       neutral:  'Hey {name} 😊 hier ist der Link zum Test, dauert ca. 5 Minuten und ist anonym: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis zugeschickt und ich weiß Bescheid. LG',
+    },
+    gespraech_auswertung: {
+      pfeil:    'Hey {name}, danke fürs Mitmachen! Hast du Lust, kurz über dein Ergebnis zu sprechen? Wann passt es dir?',
+      funke:    'Hey {name}, du hast den Test gemacht, wie cool! Was ist dir bei deinem Ergebnis aufgefallen? Lass uns kurz drüber quatschen, wann passt es dir?',
+      anker:    'Hey {name}, danke dir, dass du den Test gemacht hast. Wie ist das Ergebnis bei dir angekommen? Wenn du magst, schauen wir es uns in Ruhe zusammen an, wann passt es dir?',
+      kristall: 'Hallo {name}, danke, dass du den Test gemacht hast. Wenn du magst, gehen wir dein Ergebnis zusammen durch und ich erkläre dir gern die Hintergründe. Wann hättest du Zeit?',
+      neutral:  'Hey {name}, danke, dass du den Test gemacht hast! Wie ist dein Ergebnis bei dir angekommen? Magst du kurz mit mir drüber sprechen? Sag mir, wann es dir passt.',
     },
     einladung_ausprobieren: {
       pfeil:    'Hey {name}, ich hab gesehen, dass du den Test gemacht hast 😊 Wollen wir kurz über dein Ergebnis sprechen? Und magst du es einfach mal selbst ausprobieren? Ich kann dir einen Testpatch geben.',

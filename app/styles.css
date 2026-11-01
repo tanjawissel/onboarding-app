@@ -224,6 +224,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--gold); outl
 .art-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 12px; }
 .draft-area { background: #E7F3DF; border: 1px solid #CFE3C1; min-height: 150px; border-radius: 14px 14px 14px 4px; }
 .type-line { font-size: .9rem; color: var(--ink-muted); }
+.muster-list { list-style: none; padding: 0; margin: 8px 0; }
+.muster-list li { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line, #e5e0d8); }
+.muster-list .note { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92rem; }
 
 .thinking-box { display: flex; align-items: center; padding: 14px; }
 .thinking { display: flex; gap: 10px; align-items: center; color: var(--ink-muted); }
