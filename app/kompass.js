@@ -39,8 +39,15 @@
       options: [['persoenlich', 'persönlich treffen'], ['telefon', 'Telefon'], ['sprach', 'Sprachnachricht'], ['chat', 'Schreiben / Chat'], ['social', 'Posts & Stories'], ['events', 'Veranstaltungen']] },
     { id: 'C4', key: 'learn', text: 'Wie lernst du am besten?',
       options: [['video', 'Zuschauen (Video)'], ['lesen', 'Lesen'], ['probieren', 'Einfach ausprobieren'], ['gemeinsam', 'Gemeinsam mit jemandem']] },
-    { id: 'C5', key: 'note', free: true, text: 'Was sollte dein Sponsor über dich wissen, damit die Zusammenarbeit gut läuft?',
-      hint: 'Freiwillig. Das sieht dein Sponsor nur, wenn du den Bereich „Rahmen“ freigibst.' },
+    { id: 'C5', key: 'start30', free: true, max: 300, text: 'Woran erkennst du nach 30 Tagen, dass dein Start gut war?',
+      hint: 'Freiwillig. Das sieht dein Sponsor nur, wenn du den Bereich „Rahmen“ freigibst.',
+      placeholder: 'Zum Beispiel: Ich habe die ersten Gespräche geführt und weiß, wie es weitergeht …' },
+    { id: 'C6', key: 'haenger', free: true, max: 300, text: 'Was könnte dich ausbremsen, und wie soll dein Sponsor dich dann ansprechen?',
+      hint: 'Freiwillig. Das sieht dein Sponsor nur, wenn du den Bereich „Rahmen“ freigibst.',
+      placeholder: 'Zum Beispiel: Wenn ich mich eine Woche nicht melde, schreib mir bitte eine kurze Nachricht …' },
+    { id: 'C7', key: 'note', free: true, last: true, max: 500, text: 'Was sollte dein Sponsor über dich wissen, damit die Zusammenarbeit gut läuft?',
+      hint: 'Freiwillig. Das sieht dein Sponsor nur, wenn du den Bereich „Rahmen“ freigibst.',
+      placeholder: 'Zum Beispiel: Ich brauche Zeit, bevor ich mich entscheide …' },
   ];
 
   const D1_PREFIX = {
@@ -157,7 +164,7 @@
       state.result = { counts, main: k.typ, second: k.zweittyp, bridge: k.brueckentyp, drivers: k.antriebe };
       state.savedAt = k.ausgewertet_am;
     }
-    if (r) state.c = { hours: r.stunden || undefined, energy: r.energie || undefined, channels: r.kanaele || [], learn: r.lernstil || undefined, note: r.notiz_sponsor || '' };
+    if (r) state.c = { hours: r.stunden || undefined, energy: r.energie || undefined, channels: r.kanaele || [], learn: r.lernstil || undefined, note: r.notiz_sponsor || '', start30: r.start30 || '', haenger: r.haenger_absprache || '' };
     if (z && state.result) {
       state.d = {
         memory: z.moment || '', warum: z.warum || '', ziel12: z.ziel_12_monate || '',
@@ -236,6 +243,7 @@
       must(await sb.from('rahmen').upsert({
         owner_id: uid(), stunden: state.c.hours || null, energie: state.c.energy || null, kanaele: state.c.channels,
         lernstil: state.c.learn || null, notiz_sponsor: clip(state.c.note, 500) || null,
+        start30: clip(state.c.start30, 300) || null, haenger_absprache: clip(state.c.haenger, 300) || null,
       }));
     });
   }
@@ -571,7 +579,7 @@
     const q = s.q;
     let body;
     if (q.free) {
-      body = `<textarea id="free" maxlength="500" placeholder="Zum Beispiel: Ich brauche Zeit, bevor ich mich entscheide …">${esc(state.c.note || '')}</textarea>`;
+      body = `<textarea id="free" data-free="${q.key}" maxlength="${q.max || 500}" placeholder="${esc(q.placeholder || '')}">${esc(state.c[q.key] || '')}</textarea>`;
     } else {
       const val = state.c[q.key];
       body = `<div class="options" role="${q.multi ? 'group' : 'radiogroup'}" aria-label="${esc(q.text)}">
@@ -587,9 +595,9 @@
       <p class="question">${esc(q.text)}</p>
       ${q.hint ? `<p class="qhint">${esc(q.hint)}</p>` : ''}
       ${body}
-      ${q.free && !canEvaluate ? '<p class="notice warm">Es fehlen noch Antworten aus Teil A oder B. Geh bitte zurück und beantworte alle Fragen.</p>' : ''}
+      ${q.last && !canEvaluate ? '<p class="notice warm">Es fehlen noch Antworten aus Teil A oder B. Geh bitte zurück und beantworte alle Fragen.</p>' : ''}
       ${saveNote()}
-      <div class="actions split">${backBtn()}${ready && (!q.free || canEvaluate) ? `<button class="btn ${q.free || q.multi ? '' : 'secondary'}" data-act="next" ${state.saving ? 'disabled' : ''}>${q.free ? 'Zur Auswertung' : 'Weiter'}</button>` : '<span></span>'}</div>`;
+      <div class="actions split">${backBtn()}${ready && (!q.last || canEvaluate) ? `<button class="btn ${q.free || q.multi ? '' : 'secondary'}" data-act="next" ${state.saving ? 'disabled' : ''}>${q.last ? 'Zur Auswertung' : 'Weiter'}</button>` : '<span></span>'}</div>`;
   }
 
   function compassHtml(r) {
@@ -703,6 +711,8 @@
       <dt>Meiste Energie</dt><dd>${esc(cLabel('energy', c.energy))}</dd>
       <dt>Lieblingskanäle</dt><dd>${esc((c.channels || []).map((v) => cLabel('channels', v)).join(', ') || '–')}</dd>
       <dt>Lernt am besten</dt><dd>${esc(cLabel('learn', c.learn))}</dd>
+      ${c.start30 ? `<dt>Daran erkenne ich nach 30 Tagen einen guten Start</dt><dd>${esc(c.start30)}</dd>` : ''}
+      ${c.haenger ? `<dt>Wenn ich ausgebremst bin</dt><dd>${esc(c.haenger)}</dd>` : ''}
       ${c.note ? `<dt>Was du über mich wissen solltest</dt><dd>${esc(c.note)}</dd>` : ''}
     </dl>`;
   }
@@ -745,7 +755,7 @@
     const f = row.fuehrung;
     if (f) parts.push(`<h3>So begleitest du ${vn}</h3>${fill(f.begleiten)}<h3>Frühwarnzeichen</h3>${fill(f.warnung)}<h3>Passendes Onboarding-Tempo</h3>${fill(f.tempo)}`);
     const r = row.rahmen;
-    if (r) parts.push(`<h3>Rahmen</h3>${rahmenList({ hours: r.stunden, energy: r.energie, channels: r.kanaele || [], learn: r.lernstil, note: r.notiz_sponsor })}`);
+    if (r) parts.push(`<h3>Rahmen</h3>${rahmenList({ hours: r.stunden, energy: r.energie, channels: r.kanaele || [], learn: r.lernstil, note: r.notiz_sponsor, start30: r.start30, haenger: r.haenger_absprache })}`);
     return parts.join('') || '<p class="empty">Noch nichts freigegeben.</p>';
   };
 
@@ -768,7 +778,7 @@
         <p class="muted">Du entscheidest, was dein Sponsor sehen darf. Du kannst es jederzeit wieder ausschalten.</p>
         ${sw('ziele', 'Ziele', 'WARUM, 12-Monats-Ziel, Kunden- und Partnerziel, Wachstumsziel')}
         ${sw('fuehrung', 'Führungshinweise', 'So begleitet dein Sponsor dich, Frühwarnzeichen, passendes Tempo (ohne Typnamen)')}
-        ${sw('rahmen', 'Rahmen', 'Zeit, Energie, Kanäle, Lernstil und deine Notiz an den Sponsor')}
+        ${sw('rahmen', 'Rahmen', 'Zeit, Energie, Kanäle, Lernstil, dein 30-Tage-Erkennungszeichen, deine Hänger-Absprache und deine Notiz an den Sponsor')}
         ${saveNote()}
       </div>
       <div class="no-print" id="sponsorPreview">${sponsorPreview(r)}</div>
@@ -916,7 +926,7 @@
   app.addEventListener('input', (e) => {
     if (!here()) return;
     const t = e.target;
-    if (t.id === 'free') state.c.note = t.value;
+    if (t.dataset.free) state.c[t.dataset.free] = t.value;
     if (t.dataset.ws) {
       state.ws[t.dataset.ws] = t.value;
       const btn = document.getElementById('wsNext');
