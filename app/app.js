@@ -150,7 +150,7 @@
     return `
       <div class="eyebrow">Willkommen</div>
       <h1>Anmelden</h1>
-      <p class="lead">Gib deine E-Mail-Adresse ein. Du bekommst einen Link und einen 6-stelligen Code.</p>
+      <p class="lead">Gib deine E-Mail-Adresse ein. Du bekommst einen 6-stelligen Code und gibst ihn hier in der App ein.</p>
       ${notice()}
       <form class="card" data-form="login" novalidate>
         <label class="field" for="email">E-Mail-Adresse</label>
@@ -175,7 +175,7 @@
                style="font-size:1.6rem;letter-spacing:.3em;text-align:center">
         <div class="actions"><button class="btn block" ${state.busy ? 'disabled' : ''}>Anmelden</button></div>
       </form>
-      <p class="muted small">Die Mail kann ein paar Minuten brauchen. Schau auch im Spam-Ordner nach. Link und Code gelten eine Stunde.</p>
+      <p class="muted small">Die Mail kann ein paar Minuten brauchen. Schau auch im Spam-Ordner nach. Der Code gilt eine Stunde.</p>
       <p class="muted small"><button class="linklike" data-act="anderemail">Andere E-Mail-Adresse</button></p>`;
   }
 
@@ -739,7 +739,7 @@
       state.einladung = code;
       history.replaceState(null, '', location.pathname + '#/einladung');
     }
-    if (params.get('error_description')) say('Der Login-Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen an oder gib den Code ein.', true);
+    if (params.get('error_description')) say('Der Login-Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen Code an.', true);
 
     // Mit dem Login-Link kommt ?code=… zurück; supabase-js tauscht ihn beim Start ein.
     const { data } = await sb.auth.getSession();
