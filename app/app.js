@@ -157,7 +157,7 @@
         <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required value="${esc(state.loginEmail)}">
         <div class="actions"><button class="btn block" ${state.busy ? 'disabled' : ''}>Login-Mail schicken</button></div>
       </form>
-      <p class="muted small">Noch kein Zugang? Die App ist nur mit persönlicher Einladung nutzbar. Frag die Person, die dich ins Team geholt hat.</p>
+      <p class="muted small">Neu hier? Dann melde dich nicht hier an, sondern <a href="#/einladung">löse zuerst deinen Einladungscode ein</a>. Die App ist nur mit persönlicher Einladung nutzbar. Keinen Code? Frag die Person, die dich ins Team geholt hat.</p>
       <p class="muted small"><a href="#/code">Ich habe schon einen Code</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a></p>`;
   }
 
@@ -165,7 +165,7 @@
     return `
       <div class="eyebrow">Fast geschafft</div>
       <h1>Code eingeben</h1>
-      <p class="lead">Wir haben dir eine Mail${state.loginEmail ? ` an <strong>${esc(state.loginEmail)}</strong>` : ''} geschickt. Tipp dort auf „Jetzt anmelden“ oder gib hier den Code ein.</p>
+      <p class="lead">Wir haben dir eine Mail${state.loginEmail ? ` an <strong>${esc(state.loginEmail)}</strong>` : ''} geschickt. Gib hier den Code aus der Mail ein.</p>
       ${notice()}
       <form class="card" data-form="code" novalidate>
         ${state.loginEmail ? '' : `<label class="field" for="email">E-Mail-Adresse</label>
@@ -175,7 +175,8 @@
                style="font-size:1.6rem;letter-spacing:.3em;text-align:center">
         <div class="actions"><button class="btn block" ${state.busy ? 'disabled' : ''}>Anmelden</button></div>
       </form>
-      <p class="muted small">Die Mail kann ein paar Minuten brauchen. Schau auch im Spam-Ordner nach. Der Code gilt eine Stunde.</p>
+      <p class="muted small">Die Mail kann bis zu 10 Minuten brauchen. Schau auch im Spam-Ordner nach. Der Code gilt eine Stunde.</p>
+      <p class="muted small"><strong>Keine Mail bekommen?</strong> Wenn du neu bist, <a href="#/einladung">löse zuerst deine Einladung ein</a>. Erst danach kommt eine Login-Mail.</p>
       <p class="muted small"><button class="linklike" data-act="anderemail">Andere E-Mail-Adresse</button></p>`;
   }
 
