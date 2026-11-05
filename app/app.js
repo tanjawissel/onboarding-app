@@ -118,7 +118,7 @@
       <div class="card sand">
         <h2>Academy</h2>
         <p>Videos, Spickzettel und Startklar-Checkliste. Du meldest dich dort mit <strong>${esc(state.session?.user?.email)}</strong> und deinem eigenen Passwort an.</p>
-        <p class="small muted">Erster Besuch? Such die Mail von der Academy (auch im Spam-Ordner) und wähl dort dein Passwort. Passwort vergessen? Auf der Anmeldeseite „Passwort vergessen?“ antippen.</p>
+        <p class="small muted">Erster Besuch? Such die Mail von der Academy (auch im Spam-Ordner) und wähl dort dein Passwort. In der Academy startest du mit Modul 1 „Willkommen“. Passwort vergessen? Auf der Anmeldeseite „Passwort vergessen?“ antippen.</p>
         <div class="actions split">
           <a class="btn secondary small" href="${esc(C.academyUrl)}" target="_blank" rel="noopener">Zur Academy</a>
           <a class="btn ghost small" href="${esc(C.academyLoginUrl)}" target="_blank" rel="noopener">Anmeldeseite</a>
