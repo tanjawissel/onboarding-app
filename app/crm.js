@@ -677,7 +677,7 @@
     const tpl = (C.DRAFTS[art] || {})[k.typ_geschaetzt || 'neutral'] || C.DRAFTS[art].neutral;
     let text = tpl.replace(/\{name\}/g, firstName(k.name)).replace(/\{testlink\}/g, testLinkOr()).replace(/\{link\}/g, linkFor(art));
     if (business && art !== 'business_einladung') text += '\n\n' + C.BUSINESS_LINE;
-    if (empfehlung && art !== 'business_einladung') text += '\n\n' + C.EMPFEHLUNG_LINE;
+    if (empfehlung && art === 'nachfassen') text += '\n\n' + C.EMPFEHLUNG_LINE;
     return fillVideo(text);
   }
 
@@ -762,7 +762,7 @@
   // opts: { fresh: true } ignoriert den Zwischenspeicher, { feedback } für „Was soll anders sein?“
   async function generate(k, opts) {
     const o = opts || {};
-    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung ? 1 : 0}`;
+    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung && DR.art === 'nachfassen' ? 1 : 0}`;
     DR.error = ''; DR.kiText = '';
     if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); DR.text = fillVideo(DR.text); render(); return; }
     if (!aiReady()) {
@@ -777,7 +777,7 @@
     try {
       const out = await T.callWortstil({
         action: 'crm_entwurf', art: DR.art, typ: k.typ_geschaetzt || null,
-        profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business, empfehlung: !!DR.empfehlung,
+        profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business, empfehlung: !!DR.empfehlung && DR.art === 'nachfassen',
         muster: (T.state.muster || []).slice(0, MUSTER_MAX).map((m) => m.text),
         previous: o.feedback ? previous : undefined, feedback: o.feedback || undefined,
       });
@@ -807,7 +807,8 @@
     const needsLink = /einladung_test|einladung_ausprobieren/.test(DR.art) && !p.superpatch_link;
     const isBiz = DR.art === 'business_einladung';
     const withVideo = !!artOf(DR.art).video; // Art lebt vom Video (Business-Einladung, Feedback-Bitte)
-    const noEmpf = isBiz || /^feedback_/.test(DR.art); // Feedback: Empfehlungsfrage erst im zweiten Schritt (feedback_danke)
+    // Empfehlungsfrage nie in der ersten Nachricht (Tanja 09.11.2026), nur beim Nachfassen; bei Feedback steckt sie in feedback_danke
+    const noEmpf = DR.art !== 'nachfassen';
     const waNum = (k.telefon || '').replace(/[^\d]/g, '');
     const off = DR.loading ? 'disabled' : '';
     const hint = DR.source === 'ki'

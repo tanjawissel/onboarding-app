@@ -148,8 +148,8 @@ window.CRM_DATA = (function () {
   };
   // Begleittext zu Videos mit test: true. {link} = direkter Link zum Signalscore-Test der Person.
   const VIDEO_TEST_TEXT = 'Wenn du neugierig bist, mach danach gern den kurzen Test (ca. 5 Minuten, anonym): {link}';
-  // Indirekte Ansprache (Tanja 09.11.2026): wenn es für den Kontakt selbst nicht passt, nach Menschen im Umfeld fragen. Situation statt Kategorie, kein Druck.
-  const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Du musst niemanden überreden. Gib einfach meine Seite weiter, dann meldet sich die Person, wenn sie mag.';
+  // Indirekte Ansprache (Tanja 09.11.2026), nur beim Nachfassen, nie in der ersten Nachricht: wenn es für den Kontakt selbst nicht passt, nach Menschen im Umfeld fragen. Situation statt Kategorie, kein Druck.
+  const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Du musst niemanden überreden. Sag mir einfach Bescheid, dann schick ich dir den Link zum Weitergeben.';
   // Nur wenn beim Kontakt „Offen für das Business-Thema“ an ist UND im Entwurf ausdrücklich gewählt.
   const BUSINESS_LINE = 'Übrigens: Falls du Lust hast, das selbst weiterzuempfehlen, erzähl ich dir gern, wie ich das mache. Ganz unverbindlich.';
 
