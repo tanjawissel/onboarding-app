@@ -264,7 +264,8 @@
     const f = r.params.f || 'alle';
     const counts = Object.fromEntries(C.STATUS.map((s) => [s.key, S.kontakte.filter((k) => k.status === s.key).length]));
     const nDue = S.kontakte.filter(isDue).length;
-    const chips = [['alle', 'Alle'], ['faellig', `Fällig ${nDue}`]].concat(C.STATUS.filter((s) => counts[s.key]).map((s) => [s.key, `${s.icon} ${s.name} ${counts[s.key]}`]));
+    const nBiz = S.kontakte.filter((k) => k.business_offen).length;
+    const chips = [['alle', 'Alle'], ['faellig', `Fällig ${nDue}`]].concat(nBiz ? [['business', `💼 Business ${nBiz}`]] : [], C.STATUS.filter((s) => counts[s.key]).map((s) => [s.key, `${s.icon} ${s.name} ${counts[s.key]}`]));
     return `
       <div class="card-head"><h1>Kontakte</h1><a class="btn small" href="#/neu">＋ Neu</a></div>
       <input type="search" class="search" id="search" placeholder="🔍 Suchen …" value="${esc(listSearch)}" aria-label="Kontakte suchen">
@@ -275,6 +276,7 @@
     const q = listSearch.trim().toLowerCase();
     let list = S.kontakte.slice();
     if (f === 'faellig') list = list.filter(isDue);
+    else if (f === 'business') list = list.filter((k) => k.business_offen);
     else if (f !== 'alle') list = list.filter((k) => k.status === f);
     if (q) list = list.filter((k) => k.name.toLowerCase().includes(q));
     list.sort((a, b) => {
@@ -288,7 +290,7 @@
     return `<ul class="clist">${list.map((k) => {
       const s = statusOf(k.status);
       return `<li><a href="#/kontakt/${esc(k.id)}">
-        <div class="c-top"><span class="c-name">${esc(k.name)}</span>${dueLabel(k)}</div>
+        <div class="c-top"><span class="c-name">${esc(k.name)}${k.business_offen ? ' <span class="c-biz" title="Offen für das Business-Thema">💼 Business</span>' : ''}</span>${dueLabel(k)}</div>
         <div class="c-sub">${s.icon} ${s.name}${k.status === 'kunde' && k.smartship ? ' · SmartShip' : ''} · ${seitText(k)}${k.herkunft ? ' · ' + esc(herkunftName(k.herkunft)) : ''}</div>
       </a></li>`;
     }).join('')}</ul>`;
@@ -316,6 +318,7 @@
           <h1>${esc(k.name)}</h1>
           <button class="pill" data-act="status" aria-label="Status ändern">${s.icon} ${s.name}${k.status === 'kunde' && k.smartship ? ' · SmartShip' : ''} · ${seitText(k)} ▾</button>
           <p class="muted" style="margin-top:8px">${[esc(herkunftName(k.herkunft)), esc(kanalName(k.kanal)), k.telefon ? '📱 ' + esc(k.telefon) : ''].filter(Boolean).join(' · ')}</p>
+          ${k.business_offen ? '<p style="margin-top:6px"><span class="c-biz">💼 Offen für das Business-Thema</span></p>' : ''}
         </div>
         <a class="btn secondary small" href="#/kontakt/${esc(k.id)}/bearbeiten" style="white-space:nowrap">✎ Bearbeiten</a>
       </div>

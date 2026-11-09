@@ -179,6 +179,7 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--gold); outl
 .clist a:hover { background: #FDFBF7; }
 .c-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
 .c-name { font-weight: 700; color: var(--bark); }
+.c-biz { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--olive); color: #fff; font-size: .75rem; font-weight: 700; vertical-align: middle; white-space: nowrap; }
 .c-sub { font-size: .86rem; color: var(--ink-muted); }
 .due { font-size: .82rem; font-weight: 700; white-space: nowrap; color: var(--ink-muted); }
 .due.today { color: var(--terra-deep); }
