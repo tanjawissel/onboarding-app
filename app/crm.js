@@ -317,7 +317,7 @@
           <button class="pill" data-act="status" aria-label="Status ändern">${s.icon} ${s.name}${k.status === 'kunde' && k.smartship ? ' · SmartShip' : ''} · ${seitText(k)} ▾</button>
           <p class="muted" style="margin-top:8px">${[esc(herkunftName(k.herkunft)), esc(kanalName(k.kanal)), k.telefon ? '📱 ' + esc(k.telefon) : ''].filter(Boolean).join(' · ')}</p>
         </div>
-        <button class="btn ghost small" data-act="menu" aria-label="Weitere Aktionen">⋯</button>
+        <a class="btn secondary small" href="#/kontakt/${esc(k.id)}/bearbeiten" style="white-space:nowrap">✎ Bearbeiten</a>
       </div>
 
       <section class="card fu-box ${k.follow_up_am ? '' : 'none'}">
