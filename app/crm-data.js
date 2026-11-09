@@ -34,20 +34,21 @@ window.CRM_DATA = (function () {
   // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 vorerst aus der Liste genommen.
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
+    // Dateinamen ohne Zielgruppe, weil Kontakte den Link sehen (Tanja 09.11.2026). Die alten Dateien in /videos bleiben liegen, damit schon verschickte Links weiter gehen.
     // Fassung 6 „Welche Signale gibt dir dein Körper?“, abgenommen 09.11.2026 (Kundenweg, jung und alt, Einladung zum Test). In der App „Signal-Score“ genannt (Tanja 09.11.2026). Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-6_9x16_klein.mp4
     { key: 'vision6',     titel: 'Video „Signal-Score“', dauer: '2 Min.',
-      url: 'https://app.tanjawissel.ch/videos/video-welche-signale-gibt-dir-dein-koerper_fuer-kunden.mp4',
+      url: 'https://app.tanjawissel.ch/videos/signal-score.mp4',
       worum: 'Einladung zum kurzen Test: herausfinden, welche Signale der eigene Körper gibt',
       // Test-Link nur auf Anfrage (Tanja 09.11.2026): kein automatischer Anhang mehr (früher test: true)
       fuer: 'für Kundenkontakte jeden Alters; den Test-Link schickst du erst, wenn der Kontakt danach fragt' },
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
     { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
-      url: 'https://app.tanjawissel.ch/videos/visions-video-naechstes-kapitel_fuer-menschen-mit-lebenserfahrung.mp4',
+      url: 'https://app.tanjawissel.ch/videos/naechstes-kapitel.mp4',
       worum: 'Die Geschäftsidee und die Vision: etwas Eigenes aufbauen, rund ums eigene Leben',
       fuer: 'für Menschen mit Lebenserfahrung, die etwas Eigenes aufbauen und selbstbestimmt für sich sorgen wollen' },
     // Fassung 5 „Etwas Besseres aufbauen“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-5_9x16_klein.mp4
     { key: 'vision5',     titel: 'Visions-Video „Etwas Besseres aufbauen“', dauer: '1,5 Min.',
-      url: 'https://app.tanjawissel.ch/videos/visions-video-etwas-besseres-aufbauen_fuer-juengere.mp4',
+      url: 'https://app.tanjawissel.ch/videos/etwas-besseres-aufbauen.mp4',
       worum: 'Neben Job, Studium oder Familie etwas Eigenes starten und dabei wachsen',
       fuer: 'für Jüngere, die neben Job, Studium oder Familie etwas Eigenes starten wollen' },
     // Fassung 3 „Ein guter Moment zum Einsteigen“, abgenommen 07.11.2026. Gesprächsbaustein V1 (Tanja 09.11.2026): Fassung 3 für den Kundenweg.
@@ -58,7 +59,7 @@ window.CRM_DATA = (function () {
     //   fuer: 'für alle, bei denen erst das Ausprobieren zählt (Kundenweg)' },
     // Erklärvideo Technologie, abgenommen 05.11.2026. Datei: Videos/Tanja-Wissel_Erklaervideo-Technologie_9x16_klein.mp4 (Tanja 09.11.: auch für Kunden)
     { key: 'technologie', titel: 'Erklärvideo Technologie',  dauer: '3,5 Min.',
-      url: 'https://app.tanjawissel.ch/videos/erklaervideo-technologie_fuer-kunden-und-interessenten.mp4',
+      url: 'https://app.tanjawissel.ch/videos/erklaervideo-technologie.mp4',
       worum: 'Die Technologie hinter Superpatch, ruhig erklärt',
       fuer: 'für Kunden und Interessenten, die wissen wollen, wie es funktioniert, oder als nächster Schritt nach dem Visions-Video' },
   ];
