@@ -31,6 +31,11 @@ window.CRM_DATA = (function () {
   // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 vorerst aus der Liste genommen.
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
+    // Fassung 6 „Welche Signale gibt dir dein Körper?“, abgenommen 09.11.2026 (Kundenweg, jung und alt, Einladung zum Test). Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-6_9x16_klein.mp4
+    { key: 'vision6',     titel: 'Video „Welche Signale gibt dir dein Körper?“', dauer: '2 Min.',
+      url: 'https://app.tanjawissel.ch/videos/video-welche-signale-gibt-dir-dein-koerper_fuer-kunden.mp4',
+      worum: 'Einladung zum kurzen Test: herausfinden, welche Signale der eigene Körper gibt',
+      fuer: 'für Kundenkontakte jeden Alters; danach schickst du ihnen deinen Test-Link' },
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
     { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/visions-video-naechstes-kapitel_fuer-menschen-mit-lebenserfahrung.mp4',
