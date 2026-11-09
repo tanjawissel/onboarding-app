@@ -34,11 +34,12 @@ window.CRM_DATA = (function () {
   // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 vorerst aus der Liste genommen.
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
-    // Fassung 6 „Welche Signale gibt dir dein Körper?“, abgenommen 09.11.2026 (Kundenweg, jung und alt, Einladung zum Test). Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-6_9x16_klein.mp4
-    { key: 'vision6',     titel: 'Video „Welche Signale gibt dir dein Körper?“', dauer: '2 Min.',
+    // Fassung 6 „Welche Signale gibt dir dein Körper?“, abgenommen 09.11.2026 (Kundenweg, jung und alt, Einladung zum Test). In der App „Signal-Score“ genannt (Tanja 09.11.2026). Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-6_9x16_klein.mp4
+    { key: 'vision6',     titel: 'Video „Signal-Score“', dauer: '2 Min.',
       url: 'https://app.tanjawissel.ch/videos/video-welche-signale-gibt-dir-dein-koerper_fuer-kunden.mp4',
       worum: 'Einladung zum kurzen Test: herausfinden, welche Signale der eigene Körper gibt',
-      fuer: 'für Kundenkontakte jeden Alters; die App hängt deinen Test-Link an', test: true },
+      // Test-Link nur auf Anfrage (Tanja 09.11.2026): kein automatischer Anhang mehr (früher test: true)
+      fuer: 'für Kundenkontakte jeden Alters; den Test-Link schickst du erst, wenn der Kontakt danach fragt' },
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
     { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/visions-video-naechstes-kapitel_fuer-menschen-mit-lebenserfahrung.mp4',
@@ -129,15 +130,14 @@ window.CRM_DATA = (function () {
       kristall: 'Hallo {name}, du schaust dir Dinge genau an, das schätze ich an dir. Ich denk an dich, weil [Grund]. Ich bau mir gerade nebenberuflich etwas Eigenes auf, auf einem Fundament, das schon steht, und erklär dir gern in Ruhe, wie das funktioniert. Als Einstieg ein kurzes Video: [Video-Link] Lass dir Zeit und sag mir einfach, ob du mehr wissen möchtest. LG',
       neutral:  'Hey {name} 😊 als ich überlegt hab, mit wem ich das teilen möchte, hab ich an dich gedacht, weil [Grund]. Ich bau mir gerade nebenbei etwas Eigenes auf, rund um mein Leben und nicht umgekehrt. Magst du dir ein kurzes Video dazu anschauen? [Video-Link] Ganz unverbindlich, du entscheidest. LG',
     },
-    // Um einen Gefallen bitten: ehrlicher Anlass, kurzes Video, ehrliches Feedback, Test nur als Angebot (Tanja 09.11.2026)
+    // Um einen Gefallen bitten: ehrlicher Anlass, kurzes Video, ehrliches Feedback, ohne Test-Link (Tanja 09.11.2026)
     feedback_bitte: {
-      pfeil:    'Hey {name} 😊 kurze Bitte an dich: Ich hab hier ein Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Den kurzen Test dazu gibt es hier, falls du neugierig wirst: {testlink} Danke dir!',
-      funke:    'Hey {name} 😄 wir hören uns ja eher selten, umso mehr freu ich mich, dich um etwas zu bitten: Schau dir doch mal dieses kurze Video an: [Video-Link] Ich bin gespannt auf deine ehrliche Meinung, findest du es gut und spannend? Und wenn du Lust bekommst, hier ist der kurze Test dazu: {testlink}',
-      anker:    'Hey {name} 😊 wie geht’s dir? Wir hören uns ja eher selten, darum freu ich mich, dass ich dich um einen kleinen Gefallen bitten darf. Ich hab ein kurzes Video: [Video-Link] Magst du es dir in Ruhe anschauen und mir ehrlich sagen, wie es auf dich wirkt? Ganz ohne Eile. Den Test dazu findest du hier, nur falls du neugierig wirst: {testlink}',
-      kristall: 'Hallo {name}, ich hätte eine Bitte an dich: Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Mir ist deine ehrliche Einschätzung wichtig: Ist es verständlich, gut gemacht und spannend? Wenn du es selbst ausprobieren magst, gibt es hier den kurzen, anonymen Test dazu: {testlink} Danke dir! LG',
-      neutral:  'Hey {name} 😊 wir hören uns ja eher selten, umso mehr freu ich mich, dass ich dich um etwas bitten darf. Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Wenn du neugierig wirst, hier ist der kurze Test dazu: {testlink} Danke dir!',
-    },
-    // Zweiter Schritt: nach dem Feedback fragen, danken, dann erst um Menschen im Umfeld bitten (Situation statt Kategorie, Entlastung)
+      pfeil:    'Hey {name} 😊 kurze Bitte an dich: Ich hab hier ein Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Danke dir!',
+      funke:    'Hey {name} 😄 wir hören uns ja eher selten, umso mehr freu ich mich, dich um etwas zu bitten: Schau dir doch mal dieses kurze Video an: [Video-Link] Ich bin gespannt auf deine ehrliche Meinung, findest du es gut und spannend?',
+      anker:    'Hey {name} 😊 wie geht’s dir? Wir hören uns ja eher selten, darum freu ich mich, dass ich dich um einen kleinen Gefallen bitten darf. Ich hab ein kurzes Video: [Video-Link] Magst du es dir in Ruhe anschauen und mir ehrlich sagen, wie es auf dich wirkt? Ganz ohne Eile.',
+      kristall: 'Hallo {name}, ich hätte eine Bitte an dich: Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Mir ist deine ehrliche Einschätzung wichtig: Ist es verständlich, gut gemacht und spannend? Danke dir! LG',
+      neutral:  'Hey {name} 😊 wir hören uns ja eher selten, umso mehr freu ich mich, dass ich dich um etwas bitten darf. Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Danke dir!',
+    },    // Zweiter Schritt: nach dem Feedback fragen, danken, dann erst um Menschen im Umfeld bitten (Situation statt Kategorie, Entlastung)
     feedback_danke: {
       pfeil:    'Hey {name} 😊 hast du kurz ins Video geschaut? Was ist dir hängen geblieben? Und noch eine Frage: Kennst du jemanden, der offen für etwas Neues ist und das spannend finden könnte? Gib den Link einfach weiter, du musst niemanden überreden.',
       funke:    'Hey {name} 😄 danke dir schon mal fürs Reinschauen! Was hat dir am besten gefallen? Und sag mal: Fällt dir jemand ein, der gerade offen für etwas Neues ist und das spannend finden könnte? Dann leite ihm das Video einfach weiter, er meldet sich, wenn er mag.',
