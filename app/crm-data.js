@@ -32,11 +32,13 @@ window.CRM_DATA = (function () {
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
-    { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '2 Min.', url: '',
+    { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '2 Min.',
+      url: 'https://app.tanjawissel.ch/videos/visions-video-naechstes-kapitel_fuer-menschen-mit-lebenserfahrung.mp4',
       worum: 'Die Geschäftsidee und die Vision: etwas Eigenes aufbauen, rund ums eigene Leben',
       fuer: 'für Menschen mit Lebenserfahrung, die etwas Eigenes aufbauen und selbstbestimmt für sich sorgen wollen' },
     // Fassung 5 „Etwas Besseres aufbauen“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-5_9x16_klein.mp4
-    { key: 'vision5',     titel: 'Visions-Video „Etwas Besseres aufbauen“', dauer: '1,5 Min.', url: '',
+    { key: 'vision5',     titel: 'Visions-Video „Etwas Besseres aufbauen“', dauer: '1,5 Min.',
+      url: 'https://app.tanjawissel.ch/videos/visions-video-etwas-besseres-aufbauen_fuer-juengere.mp4',
       worum: 'Neben Job, Studium oder Familie etwas Eigenes starten und dabei wachsen',
       fuer: 'für Jüngere, die neben Job, Studium oder Familie etwas Eigenes starten wollen' },
     // Fassung 3 „Ein guter Moment zum Einsteigen“, abgenommen 07.11.2026. Gesprächsbaustein V1 (Tanja 09.11.2026): Fassung 3 für den Kundenweg.

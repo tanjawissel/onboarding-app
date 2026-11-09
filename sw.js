@@ -16,6 +16,8 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  // Videos laufen direkt übers Netz (Teil-Anfragen beim Abspielen, zu groß für den Speicher)
+  if (url.pathname.startsWith('/videos/')) return;
   event.respondWith((async () => {
     try {
       const res = await fetch(req);
