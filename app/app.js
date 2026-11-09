@@ -365,6 +365,10 @@
         : '<p class="empty">Noch keine Partner. Sobald jemand deinen Code einlöst, steht die Person hier.</p>'}
         <p class="muted small">Du siehst hier nur Vornamen und das, was deine Partner selbst freigeben: Ziele, Führungshinweise und Rahmen. Kontakte und Typ deiner Partner siehst du nie.</p>
       </div>
+      <a class="tile" href="#/coach" style="margin-bottom:16px">
+        <div class="t-label">🤝 Mein Coach</div>
+        <div class="t-sub">Eine Person aus deiner Linie über deinem Sponsor, mit der du dein Profil teilen kannst</div>
+      </a>
       ${coachList.length ? `<div class="card">
         <h2>Ich bin Coach für</h2>
         <ul class="clist">${coachList.map(coacheeItem).join('')}</ul>
