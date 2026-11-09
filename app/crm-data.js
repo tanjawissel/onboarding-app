@@ -28,7 +28,7 @@ window.CRM_DATA = (function () {
 
   // Videos zum Weiterleiten (Tanja 09.11.2026: mehrere zur Auswahl, nicht jedes passt für jeden).
   // Neues Video: eine Zeile ergänzen. url leer = noch nicht online, wird in der Liste als „kommt bald“ gezeigt.
-  // Stand 09.11.2026 (Tanja): neues Visions-Video in Arbeit, Erklärvideo als nächster Schritt; noch nichts hochgeladen.
+  // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 noch ohne Link.
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
@@ -46,9 +46,11 @@ window.CRM_DATA = (function () {
     { key: 'vision3',     titel: 'Visions-Video „Guter Moment“', dauer: '1,5 Min.', url: '',
       worum: 'Selbst ausprobieren und entdecken, wo du gerade stehst, mit Ausblick auf etwas Eigenes',
       fuer: 'für alle, bei denen erst das Ausprobieren zählt (Kundenweg)' },
-    { key: 'technologie', titel: 'Erklärvideo Technologie',  dauer: '3 Min.',  url: '',
+    // Erklärvideo Technologie, abgenommen 05.11.2026. Datei: Videos/Tanja-Wissel_Erklaervideo-Technologie_9x16_klein.mp4 (Tanja 09.11.: auch für Kunden)
+    { key: 'technologie', titel: 'Erklärvideo Technologie',  dauer: '3,5 Min.',
+      url: 'https://app.tanjawissel.ch/videos/erklaervideo-technologie_fuer-kunden-und-interessenten.mp4',
       worum: 'Die Technologie hinter Superpatch, ruhig erklärt',
-      fuer: 'als nächster Schritt nach dem Visions-Video, oder für Sachliche, die Hintergründe wollen' },
+      fuer: 'für Kunden und Interessenten, die wissen wollen, wie es funktioniert, oder als nächster Schritt nach dem Visions-Video' },
   ];
 
   const TYPES = {
