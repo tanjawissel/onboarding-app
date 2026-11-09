@@ -31,7 +31,7 @@
   const render = () => T.render();
   const go = (hash) => T.go(hash);
   const toast = T.toast;
-  const crmView = (name) => ['heute', 'kontakte', 'kontakt', 'neu', 'sprachnotiz', 'entwurf'].includes(name);
+  const crmView = (name) => ['heute', 'kontakte', 'kontakt', 'neu', 'sprachnotiz', 'entwurf', 'import'].includes(name);
 
   // ---------- Speicher (nur im Arbeitsspeicher, Quelle ist die Datenbank) ----------
   const empty = () => ({ kontakte: [], notizen: [], verlauf: [], entwuerfe: [], prioritaeten: [] });
@@ -71,7 +71,7 @@
     T.state.muster = mu || [];
   }
   T.onLogin.push(load);
-  T.onLogout.push(() => { S = empty(); DR = null; F = null; REC = null; listSearch = ''; T.state.steckbrief = null; T.state.muster = []; });
+  T.onLogout.push(() => { S = empty(); DR = null; F = null; REC = null; IMP = null; listSearch = ''; T.state.steckbrief = null; T.state.muster = []; });
 
   const kontakt = (id) => S.kontakte.find((k) => k.id === id);
   const putK = (row) => { const k = normK(row); const i = S.kontakte.findIndex((x) => x.id === k.id); if (i >= 0) S.kontakte[i] = k; else S.kontakte.push(k); return k; };
@@ -267,7 +267,7 @@
     const nBiz = S.kontakte.filter((k) => k.business_offen).length;
     const chips = [['alle', 'Alle'], ['faellig', `Fällig ${nDue}`]].concat(nBiz ? [['business', `💼 Business ${nBiz}`]] : [], C.STATUS.filter((s) => counts[s.key]).map((s) => [s.key, `${s.icon} ${s.name} ${counts[s.key]}`]));
     return `
-      <div class="card-head"><h1>Kontakte</h1><a class="btn small" href="#/neu">＋ Neu</a></div>
+      <div class="card-head"><h1>Kontakte</h1><span class="head-btns"><a class="btn secondary small" href="#/import">📲 Vom Handy</a><a class="btn small" href="#/neu">＋ Neu</a></span></div>
       <input type="search" class="search" id="search" placeholder="🔍 Suchen …" value="${esc(listSearch)}" aria-label="Kontakte suchen">
       <div class="chips" role="tablist">${chips.map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-act="filter" data-f="${k}" role="tab" aria-selected="${f === k}">${esc(l)}</button>`).join('')}</div>
       <div id="list">${listHtml(f)}</div>`;
@@ -285,7 +285,7 @@
       if (!da) return a.follow_up_am.localeCompare(b.follow_up_am);
       return b.geaendert_am.localeCompare(a.geaendert_am);
     });
-    if (!S.kontakte.length) return '<div class="card empty">Trag deinen ersten Kontakt ein. Nur Menschen, die du persönlich kennst.<div class="actions" style="justify-content:center"><a class="btn" href="#/neu">＋ Kontakt eintragen</a></div></div>';
+    if (!S.kontakte.length) return '<div class="card empty">Trag deinen ersten Kontakt ein. Nur Menschen, die du persönlich kennst.<div class="actions" style="justify-content:center"><a class="btn" href="#/neu">＋ Kontakt eintragen</a><a class="btn secondary" href="#/import">📲 Vom Handy übernehmen</a></div></div>';
     if (!list.length) return '<div class="card empty">Hier ist gerade niemand.</div>';
     return `<ul class="clist">${list.map((k) => {
       const s = statusOf(k.status);
@@ -390,6 +390,7 @@
     return `
       <a class="back" href="${editing ? '#/kontakt/' + esc(k.id) : '#/kontakte'}">← ${editing ? esc(k.name) : 'Kontakte'}</a>
       <h1>${editing ? 'Kontakt bearbeiten' : 'Neuer Kontakt'}</h1>
+      ${editing ? '' : '<p class="small" style="margin-top:-4px">Schon im Handy gespeichert? <a href="#/import">Vom Handy übernehmen ›</a></p>'}
       <form id="kform" class="card" novalidate>
         <label class="field" for="f-name">Name *</label>
         <input type="text" id="f-name" name="name" maxlength="80" value="${esc(F.name)}" placeholder="so, wie du den Kontakt nennst, z. B. „Irene vom Yoga“" required>
@@ -457,6 +458,109 @@
       }
     });
     if (r.name === 'neu') document.getElementById('f-name').focus();
+  }
+
+  // ---------- Kontakte vom Handy übernehmen (Tanja, 09.11.2026) ----------
+  // Nur, was die Person selbst auswählt; nur Name und Telefon; Vorschau mit Häkchen; Doppelte werden übersprungen.
+  const KI = window.KONTAKT_IMPORT;
+  const IMP_MAX = 300;
+  let IMP = null; // { liste: [{ name, telefon, telVerworfen, doppelt, an }], ohneName, mehr, hinweis }
+  const impGewaehlt = () => (IMP && IMP.liste ? IMP.liste.filter((x) => x.an && !x.doppelt).length : 0);
+  const impKnopf = () => { const n = impGewaehlt(); return n === 1 ? '1 Kontakt übernehmen' : `${n} Kontakte übernehmen`; };
+  function viewImport() {
+    if (!IMP) IMP = { liste: null, ohneName: 0, mehr: 0, hinweis: false };
+    if (!IMP.liste) {
+      const picker = KI.pickerDa();
+      return `
+      <a class="back" href="#/kontakte">← Kontakte</a>
+      <h1>Kontakte vom Handy</h1>
+      <p>Hol dir Menschen, die schon in deinem Handy sind, mit ein paar Tipps in deine Liste. Du wählst selbst aus, wen. Die App übernimmt nur Name und Telefonnummer.</p>
+      ${picker ? `<div class="card">
+        <h2>Aus deinen Handy-Kontakten</h2>
+        <p class="small muted">Dein Handy öffnet deine Kontakte. Tipp die an, die du übernehmen möchtest. Die App sieht nur diese.</p>
+        <div class="actions"><button class="btn" data-act="imp-picker">📱 Aus Handy-Kontakten wählen</button></div>
+      </div>` : ''}
+      <div class="card${picker ? ' sand' : ''}">
+        <h2>Kontakt-Datei laden</h2>
+        <p class="small"><b>So geht’s auf dem iPhone:</b> App <b>Kontakte</b> › Kontakt antippen › <b>„Kontakt teilen“</b> › <b>„In Dateien sichern“</b>. Dann hier „Kontakt-Datei laden“ antippen und die Datei wählen.</p>
+        <p class="small muted">Auch eine Datei mit mehreren Kontakten klappt (.vcf).</p>
+        <div class="actions"><label class="btn${picker ? ' secondary' : ''} file-btn">📄 Kontakt-Datei laden<input type="file" id="imp-vcf" accept=".vcf,.vcard,text/vcard,text/x-vcard,text/directory"></label></div>
+      </div>
+      <div class="card sand">
+        <h2>Mehrere aus einer Tabelle</h2>
+        <p class="small">Eine Tabelle (CSV) mit den Spalten <b>Name</b> und <b>Telefon</b>. Die Datei aus „Kontakte herunterladen“ (Profil) passt auch.</p>
+        <div class="actions"><label class="btn secondary small file-btn">📊 Tabelle laden<input type="file" id="imp-csv" accept=".csv,text/csv,text/comma-separated-values"></label></div>
+      </div>
+      <p class="small muted">🔒 Adressen, Geburtstage, Fotos und alles andere bleiben auf deinem Handy.</p>`;
+    }
+    const L = IMP.liste;
+    const nDoppelt = L.filter((x) => x.doppelt).length;
+    const infos = [];
+    if (nDoppelt) infos.push(nDoppelt === 1 ? '1 Kontakt ist schon da (gleicher Name oder gleiche Nummer) und wird übersprungen.' : `${nDoppelt} Kontakte sind schon da (gleicher Name oder gleiche Nummer) und werden übersprungen.`);
+    if (IMP.ohneName) infos.push(IMP.ohneName === 1 ? '1 Eintrag ohne Namen bleibt draußen.' : `${IMP.ohneName} Einträge ohne Namen bleiben draußen.`);
+    if (IMP.mehr) infos.push(`Auf einmal gehen bis zu ${IMP_MAX}. Die übrigen ${IMP.mehr} lädst du danach einfach nochmal.`);
+    if (L.some((x) => x.telVerworfen && !x.doppelt)) infos.push('Bei „ohne Nummer“ war die Nummer nicht lesbar. Du kannst sie später im Kontakt eintragen.');
+    return `
+      <button class="back" data-act="imp-reset">← Andere auswählen</button>
+      <h1>Diese Kontakte übernehmen?</h1>
+      <p class="small muted">Hak ab, wen du gerade nicht möchtest. Alle starten mit dem Status „Neu“.</p>
+      ${infos.length ? `<p class="notice">${infos.map(esc).join('<br>')}</p>` : ''}
+      <div class="actions" style="margin:0 0 8px"><button class="btn ghost small" data-act="imp-alle" data-on="1">Alle</button><button class="btn ghost small" data-act="imp-alle" data-on="">Keine</button></div>
+      <ul class="clist imp-list">${L.map((x, i) => `<li><label class="imp-row${x.doppelt ? ' off' : ''}">
+        <input type="checkbox" data-act="imp-toggle" data-i="${i}" ${x.an && !x.doppelt ? 'checked' : ''} ${x.doppelt ? 'disabled' : ''}>
+        <span><span class="c-name">${esc(x.name)}</span><span class="c-sub">${x.telefon ? esc(x.telefon) : 'ohne Nummer'}${x.doppelt ? ' · schon da' : ''}</span></span>
+      </label></li>`).join('')}</ul>
+      ${hinweisOffen() ? hinweisHtml(IMP.hinweis, 'data-act="imp-hinweis"') : '<p class="small muted">Nur Menschen, die du persönlich kennst. Löschen kannst du jeden Kontakt jederzeit.</p>'}
+      <div class="actions split"><button class="btn ghost" data-act="imp-reset">Abbrechen</button><button class="btn" data-act="imp-save" id="imp-save" ${impGewaehlt() ? '' : 'disabled'}>${impKnopf()}</button></div>`;
+  }
+  function impVorschau(list) {
+    const v = KI.vorschau(list, S.kontakte);
+    if (!v.liste.length) { toast('Da habe ich keine Kontakte mit Namen gefunden.'); return; }
+    IMP = Object.assign(IMP || {}, { liste: v.liste.slice(0, IMP_MAX), ohneName: v.ohneName, mehr: Math.max(0, v.liste.length - IMP_MAX) });
+    render(); window.scrollTo(0, 0);
+  }
+  async function impDatei(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast('Die Datei ist zu groß. Nimm weniger Kontakte auf einmal.'); return; }
+    let text;
+    try {
+      const buf = await file.arrayBuffer();
+      text = new TextDecoder('utf-8').decode(buf);
+      if (text.includes('�')) text = new TextDecoder('windows-1252').decode(buf); // ältere Excel-Tabellen
+    } catch (_) { toast('Die Datei ließ sich nicht öffnen.'); return; }
+    if (/BEGIN:VCARD/i.test(text)) { impVorschau(KI.parseVcf(text)); return; }
+    const r = KI.parseCsv(text);
+    if (r.fehler === 'kopf') { toast('In der Tabelle fehlt eine Spalte „Name“.'); return; }
+    if (!r.kontakte.length) { toast('In der Datei habe ich keine Kontakte gefunden.'); return; }
+    impVorschau(r.kontakte);
+  }
+  function afterImport() {
+    ['imp-vcf', 'imp-csv'].forEach((id) => {
+      const inp = document.getElementById(id);
+      if (inp) inp.addEventListener('change', () => { const f = inp.files[0]; inp.value = ''; impDatei(f); });
+    });
+  }
+  async function impSpeichern() {
+    // Vor dem Speichern nochmal gegen die aktuelle Liste abgleichen
+    const v = KI.vorschau(IMP.liste.filter((x) => x.an && !x.doppelt), S.kontakte);
+    const rows = v.liste.filter((x) => !x.doppelt).map((x) => ({ name: x.name, telefon: x.telefon || null, kanal: x.telefon ? 'whatsapp' : null }));
+    if (!rows.length) { toast('Wähl mindestens einen Kontakt aus.'); return; }
+    if (hinweisOffen()) {
+      if (!IMP.hinweis) { toast('Bitte bestätige einmal den Hinweis unten.'); return; }
+      if (!await hinweisBestaetigen()) return;
+    }
+    let n = 0;
+    for (let i = 0; i < rows.length; i += 50) {
+      const part = await db(sb.from('kontakte').insert(rows.slice(i, i + 50)).select(), 'Die Kontakte konnten nicht gespeichert werden. Bitte versuch es nochmal.');
+      if (!part) break;
+      part.forEach(putK); n += part.length;
+      const ver = await db(sb.from('verlauf').select('*').in('kontakt_id', part.map((x) => x.id)), 'Der Verlauf konnte nicht geladen werden.');
+      if (ver) S.verlauf = S.verlauf.concat(ver.map(normV));
+    }
+    if (!n) return;
+    IMP = null;
+    toast(n === 1 ? '1 Kontakt übernommen' : `${n} Kontakte übernommen`);
+    go('#/kontakte?f=neu');
   }
 
   // ---------- Gespräch dokumentieren ----------
@@ -1004,6 +1108,27 @@
         S.entwuerfe = S.entwuerfe.filter((x) => x.id !== el.dataset.id); render();
       });
 
+      // Vom Handy übernehmen
+      case 'imp-picker':
+        // muss direkt im Tipp passieren, sonst öffnet Chrome die Auswahl nicht
+        navigator.contacts.select(['name', 'tel'], { multiple: true })
+          .then((list) => { if (list && list.length) impVorschau(KI.fromPicker(list)); })
+          .catch(() => toast('Die Auswahl hat nicht geklappt. Lade sonst eine Kontakt-Datei.'));
+        return;
+      case 'imp-toggle': {
+        const x = IMP && IMP.liste && IMP.liste[Number(el.dataset.i)];
+        if (x) x.an = el.checked;
+        const b = document.getElementById('imp-save');
+        if (b) { b.textContent = impKnopf(); b.disabled = !impGewaehlt(); }
+        return;
+      }
+      case 'imp-alle': if (IMP && IMP.liste) { IMP.liste.forEach((x) => { x.an = !!el.dataset.on; }); render(); } return;
+      case 'imp-hinweis': if (IMP) IMP.hinweis = el.checked; return;
+      case 'imp-reset': IMP = null; render(); window.scrollTo(0, 0); return;
+      case 'imp-save': if (working) return; working = true; el.disabled = true;
+        try { await impSpeichern(); } finally { working = false; const b = document.getElementById('imp-save'); if (b) b.disabled = !impGewaehlt(); }
+        return;
+
       // Gespräch
       case 'rec-save': return saveRec(el);
 
@@ -1100,7 +1225,7 @@
     }
   });
 
-  T.onRoute.push((r) => { if (r.name !== 'entwurf') DR = null; if (!(r.name === 'neu' || r.sub === 'bearbeiten')) F = null; });
+  T.onRoute.push((r) => { if (r.name !== 'import') IMP = null; if (r.name !== 'entwurf') DR = null; if (!(r.name === 'neu' || r.sub === 'bearbeiten')) F = null; });
 
   // Kontaktdetail und Formular teilen sich die Route #/kontakt/<id>[/bearbeiten]
   T.views.heute = { html: viewHeute };
@@ -1109,4 +1234,5 @@
   T.views.neu = { html: (r) => viewForm(r, null), after: afterForm, tab: 'kontakte', noKeep: true };
   T.views.sprachnotiz = { html: viewSprachnotiz, after: afterSprachnotiz, tab: 'heute', noKeep: true };
   T.views.entwurf = { html: viewEntwurf, after: afterEntwurf, tab: 'kontakte', noKeep: true };
+  T.views.import = { html: viewImport, after: afterImport, tab: 'kontakte', noKeep: true };
 })();
