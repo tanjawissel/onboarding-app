@@ -28,7 +28,7 @@ window.CRM_DATA = (function () {
 
   // Videos zum Weiterleiten (Tanja 09.11.2026: mehrere zur Auswahl, nicht jedes passt für jeden).
   // Neues Video: eine Zeile ergänzen. url leer = noch nicht online, wird in der Liste als „kommt bald“ gezeigt.
-  // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 noch ohne Link.
+  // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 vorerst aus der Liste genommen.
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
@@ -42,10 +42,11 @@ window.CRM_DATA = (function () {
       worum: 'Neben Job, Studium oder Familie etwas Eigenes starten und dabei wachsen',
       fuer: 'für Jüngere, die neben Job, Studium oder Familie etwas Eigenes starten wollen' },
     // Fassung 3 „Ein guter Moment zum Einsteigen“, abgenommen 07.11.2026. Gesprächsbaustein V1 (Tanja 09.11.2026): Fassung 3 für den Kundenweg.
+    // Tanja 09.11.2026: „erstmal von der Liste entfernen“. Zum Zurückholen die Zeile wieder einkommentieren.
     // Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-3_9x16_klein.mp4
-    { key: 'vision3',     titel: 'Visions-Video „Guter Moment“', dauer: '1,5 Min.', url: '',
-      worum: 'Selbst ausprobieren und entdecken, wo du gerade stehst, mit Ausblick auf etwas Eigenes',
-      fuer: 'für alle, bei denen erst das Ausprobieren zählt (Kundenweg)' },
+    // { key: 'vision3',     titel: 'Visions-Video „Guter Moment“', dauer: '1,5 Min.', url: '',
+    //   worum: 'Selbst ausprobieren und entdecken, wo du gerade stehst, mit Ausblick auf etwas Eigenes',
+    //   fuer: 'für alle, bei denen erst das Ausprobieren zählt (Kundenweg)' },
     // Erklärvideo Technologie, abgenommen 05.11.2026. Datei: Videos/Tanja-Wissel_Erklaervideo-Technologie_9x16_klein.mp4 (Tanja 09.11.: auch für Kunden)
     { key: 'technologie', titel: 'Erklärvideo Technologie',  dauer: '3,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/erklaervideo-technologie_fuer-kunden-und-interessenten.mp4',
