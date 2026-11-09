@@ -31,8 +31,8 @@ window.CRM_DATA = (function () {
   // Stand 09.11.2026 (Tanja): Visions-Videos 4 und 5 und Erklärvideo Technologie hochgeladen (videos/), Fassung 3 vorerst aus der Liste genommen.
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
-    // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
-    { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '2 Min.',
+    // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
+    { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/visions-video-naechstes-kapitel_fuer-menschen-mit-lebenserfahrung.mp4',
       worum: 'Die Geschäftsidee und die Vision: etwas Eigenes aufbauen, rund ums eigene Leben',
       fuer: 'für Menschen mit Lebenserfahrung, die etwas Eigenes aufbauen und selbstbestimmt für sich sorgen wollen' },
