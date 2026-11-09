@@ -30,6 +30,12 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const LINK = /^https:\/\/[a-z0-9-]+\.superpatch\.com(\/.*)?$/i;
+  // Signalscore-Test der Partnerin, aus ihrem Superpatch-Link erzeugt (Tanja 09.11.2026):
+  // https://deinname.superpatch.com → https://signal.superpatch.com/de-DE/survey?rsu=deinname
+  function testLink(link) {
+    const m = /^https:\/\/([a-z0-9-]+)\.superpatch\.com/i.exec(String(link || '').trim());
+    return m && !/^(www|signal)$/i.test(m[1]) ? `https://signal.superpatch.com/de-DE/survey?rsu=${m[1].toLowerCase()}` : '';
+  }
   // #/name/id/sub?param=…
   function parseRoute() {
     const h = location.hash.replace(/^#\/?/, '') || 'heute';
@@ -135,7 +141,7 @@
 
   // Schnittstelle für crm.js und kompass.js
   const TW = window.TW = {
-    sb, C, state, esc, say, notice, toast, copyText, openModal, closeModal, greeting, fmtDate,
+    sb, C, state, esc, say, notice, toast, copyText, openModal, closeModal, greeting, fmtDate, testLink,
     route: parseRoute, go, render: () => render(), callWortstil,
     views: {},         // name → { html(r) → string|Promise, after?(r), tab? }
     onLogin: [],       // async () → Daten laden
@@ -212,6 +218,9 @@
         <input type="text" id="vorname" name="vorname" maxlength="40" value="${esc(p.vorname)}">
         <label class="field" for="link">Mein Superpatch-Link <span class="opt">(z. B. https://deinname.superpatch.com)</span></label>
         <input type="url" id="link" name="superpatch_link" maxlength="200" inputmode="url" placeholder="https://…superpatch.com" value="${esc(p.superpatch_link)}">
+        ${testLink(p.superpatch_link) ? `<p class="small" style="margin-top:6px">Dein Link zum Signalscore-Test <span class="muted">(erzeugt die App aus deinem Superpatch-Link, setzt ihn in deine Test-Einladungen ein)</span>:<br><a href="${esc(testLink(p.superpatch_link))}" target="_blank" rel="noopener">${esc(testLink(p.superpatch_link))}</a>
+          <button type="button" class="btn ghost small" data-act="copy-test" data-text="${esc(testLink(p.superpatch_link))}">📋 Kopieren</button></p>`
+          : '<p class="small muted" style="margin-top:6px">Sobald dein Superpatch-Link hier steht, erzeugt die App daraus deinen Link zum Signalscore-Test.</p>'}
         <label class="field" for="woche">Wochenziel: neue Kontakte ansprechen</label>
         <input type="number" id="woche" name="kontakte_pro_woche" min="1" max="30" value="${esc(p.kontakte_pro_woche ?? 5)}">
         <p class="small muted">Vorschlag aus deinem Freiheits-Kompass (Ziel D3): unter 3 Std. = 3 · 3–5 Std. = 5 · 5–10 Std. = 8 · mehr als 10 Std. = 14.</p>
@@ -679,6 +688,7 @@
       });
     }
     if (act === 'copy-invite') { copyText(b.dataset.text, 'Einladung kopiert'); b.textContent = 'Kopiert ✓'; return; }
+    if (act === 'copy-test') { copyText(b.dataset.text, 'Test-Link kopiert'); b.textContent = 'Kopiert ✓'; return; }
     if (act === 'widerrufen') {
       if (!window.confirm('Diesen Einladungscode wirklich widerrufen?')) return;
       const { error } = await sb.rpc('einladungscode_widerrufen', { p_id: b.dataset.id });

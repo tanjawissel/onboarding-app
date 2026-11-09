@@ -23,7 +23,10 @@ window.CRM_DATA = (function () {
     { key: 'nachfassen',             name: 'Nachfassen',                short: 'Nachfassen',    next: null },
     { key: 'danke_pflege',           name: 'Danke & Kundenpflege',      short: 'Danke & Pflege', next: null },
     // Nur sichtbar, wenn beim Kontakt „Offen für das Business-Thema“ an ist (Tanja 09.11.2026)
-    { key: 'business_einladung',     name: 'Business-Einladung',        short: 'Business-Einladung', next: null, business: true },
+    { key: 'business_einladung',     name: 'Business-Einladung',        short: 'Business-Einladung', next: null, business: true, video: true },
+    // Um einen Gefallen bitten (Tanja 09.11.2026): Video anschauen + ehrliches Feedback. Nach 3 Tagen Danke + Empfehlungsfrage (zwei getrennte Schritte).
+    { key: 'feedback_bitte',         name: 'Um Feedback bitten',        short: 'Feedback-Bitte', next: 'angesprochen', video: true, fu: { tage: 3, art: 'feedback_danke' } },
+    { key: 'feedback_danke',         name: 'Danke fürs Feedback & Empfehlung', short: 'Feedback-Danke', next: null },
   ];
 
   // Videos zum Weiterleiten (Tanja 09.11.2026: mehrere zur Auswahl, nicht jedes passt für jeden).
@@ -35,7 +38,7 @@ window.CRM_DATA = (function () {
     { key: 'vision6',     titel: 'Video „Welche Signale gibt dir dein Körper?“', dauer: '2 Min.',
       url: 'https://app.tanjawissel.ch/videos/video-welche-signale-gibt-dir-dein-koerper_fuer-kunden.mp4',
       worum: 'Einladung zum kurzen Test: herausfinden, welche Signale der eigene Körper gibt',
-      fuer: 'für Kundenkontakte jeden Alters; danach schickst du ihnen deinen Test-Link' },
+      fuer: 'für Kundenkontakte jeden Alters; die App hängt deinen Test-Link an', test: true },
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
     { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/visions-video-naechstes-kapitel_fuer-menschen-mit-lebenserfahrung.mp4',
@@ -82,12 +85,13 @@ window.CRM_DATA = (function () {
       kristall:  'Hallo {name} 😊 ich beschäftige mich gerade mit etwas Neuem. Du musst mir nichts glauben: Es gibt einen kurzen, anonymen Test, dann kannst du dir selbst ein Bild machen. Hättest du Lust?',
       neutral:   'Hey {name} 😊 ich beschäftige mich gerade mit etwas Neuem. Hättest du Lust, in Ruhe zu entdecken, wo du gerade stehst? Dazu gibt es einen kurzen, anonymen Test.',
     },
+    // {link} = direkter Link zum Signalscore-Test der Person (signal.superpatch.com/de-DE/survey?rsu=…), erzeugt aus ihrem Superpatch-Link (Tanja 09.11.2026)
     einladung_test: {
-      pfeil:    'Hey {name}, hier der Link zum Test, dauert ca. 5 Minuten und ist anonym: {link}\nTrag am Ende deine E-Mail ein, dann bekommst du dein Ergebnis zugeschickt und ich sehe, dass du fertig bist 😊',
-      funke:    'Hey {name} 😄 wie versprochen der Test! Ich hab ihn auch gemacht, echt spannend: {link}\nTrag am Ende unbedingt deine E-Mail ein, dann kommt dein Ergebnis per Mail und ich bekomme Bescheid. Ich bin neugierig!',
-      anker:    'Hey {name} 😊 danke, dass du offen dafür bist. Hier sind ein paar kurze Fragen, ganz in Ruhe, wann es dir passt (ca. 5 Minuten, anonym). Danach siehst du, welche Signale dir dein Körper gibt: {link}\nWenn du magst, trag am Ende deine E-Mail ein. Dann bekommst du dein Ergebnis zugeschickt, ich sehe, dass du ihn gemacht hast, und wir können zusammen draufschauen.',
-      kristall: 'Hallo {name}, hier der Link zum Test (ca. 5 Minuten, anonym): {link}\nAm Ende siehst du deinen Signalscore und welche Art von Patches Superpatch dir empfiehlt. Wenn du deine E-Mail einträgst, bekommst du die Auswertung zugeschickt und ich eine kurze Info. Dann erkläre ich dir gern die Hintergründe. LG',
-      neutral:  'Hey {name} 😊 hier ist der Link zum Test, dauert ca. 5 Minuten und ist anonym. So siehst du, wo du gerade stehst: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis zugeschickt und ich weiß Bescheid. LG',
+      pfeil:    'Hey {name}, ich schick dir gern den Link zum Test, dauert ca. 5 Minuten und ist anonym: {link}\nTrag am Ende deine E-Mail ein, dann bekommst du dein Ergebnis und ich eine kurze Info 😊',
+      funke:    'Hey {name} 😄 wie versprochen, hier ist der Test: {link}\nIch bin gespannt, was bei dir herauskommt! Trag am Ende deine E-Mail ein, dann kommt dein Ergebnis per Mail.',
+      anker:    'Hey {name} 😊 danke, dass du offen dafür bist. Ich schick dir gern den Link: ein paar kurze Fragen, ganz in Ruhe, wann es dir passt (ca. 5 Minuten, anonym). Danach siehst du, welche Signale dir dein Körper gibt: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis, ich sehe, dass du fertig bist, und wir können zusammen draufschauen.',
+      kristall: 'Hallo {name}, hier ist der Link zum Test (ca. 5 Minuten, anonym): {link}\nAm Ende siehst du deinen Signalscore und welche Art von Patches Superpatch dir empfiehlt. Wenn du deine E-Mail einträgst, bekommst du die Auswertung zugeschickt und ich eine kurze Info. Dann erkläre ich dir gern die Hintergründe. LG',
+      neutral:  'Hey {name} 😊 ich schick dir gern den Link zum Test, dauert ca. 5 Minuten und ist anonym. So siehst du, wo du gerade stehst: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis und ich weiß Bescheid. LG',
     },
     gespraech_auswertung: {
       pfeil:    'Hey {name}, danke fürs Mitmachen! Hast du Lust, kurz über dein Ergebnis zu sprechen? Passt es dir eher unter der Woche oder am Wochenende?',
@@ -125,7 +129,27 @@ window.CRM_DATA = (function () {
       kristall: 'Hallo {name}, du schaust dir Dinge genau an, das schätze ich an dir. Ich denk an dich, weil [Grund]. Ich bau mir gerade nebenberuflich etwas Eigenes auf, auf einem Fundament, das schon steht, und erklär dir gern in Ruhe, wie das funktioniert. Als Einstieg ein kurzes Video: [Video-Link] Lass dir Zeit und sag mir einfach, ob du mehr wissen möchtest. LG',
       neutral:  'Hey {name} 😊 als ich überlegt hab, mit wem ich das teilen möchte, hab ich an dich gedacht, weil [Grund]. Ich bau mir gerade nebenbei etwas Eigenes auf, rund um mein Leben und nicht umgekehrt. Magst du dir ein kurzes Video dazu anschauen? [Video-Link] Ganz unverbindlich, du entscheidest. LG',
     },
+    // Um einen Gefallen bitten: ehrlicher Anlass, kurzes Video, ehrliches Feedback, Test nur als Angebot (Tanja 09.11.2026)
+    feedback_bitte: {
+      pfeil:    'Hey {name} 😊 kurze Bitte an dich: Ich hab hier ein Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Den kurzen Test dazu gibt es hier, falls du neugierig wirst: {testlink} Danke dir!',
+      funke:    'Hey {name} 😄 wir hören uns ja eher selten, umso mehr freu ich mich, dich um etwas zu bitten: Schau dir doch mal dieses kurze Video an: [Video-Link] Ich bin gespannt auf deine ehrliche Meinung, findest du es gut und spannend? Und wenn du Lust bekommst, hier ist der kurze Test dazu: {testlink}',
+      anker:    'Hey {name} 😊 wie geht’s dir? Wir hören uns ja eher selten, darum freu ich mich, dass ich dich um einen kleinen Gefallen bitten darf. Ich hab ein kurzes Video: [Video-Link] Magst du es dir in Ruhe anschauen und mir ehrlich sagen, wie es auf dich wirkt? Ganz ohne Eile. Den Test dazu findest du hier, nur falls du neugierig wirst: {testlink}',
+      kristall: 'Hallo {name}, ich hätte eine Bitte an dich: Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Mir ist deine ehrliche Einschätzung wichtig: Ist es verständlich, gut gemacht und spannend? Wenn du es selbst ausprobieren magst, gibt es hier den kurzen, anonymen Test dazu: {testlink} Danke dir! LG',
+      neutral:  'Hey {name} 😊 wir hören uns ja eher selten, umso mehr freu ich mich, dass ich dich um etwas bitten darf. Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Wenn du neugierig wirst, hier ist der kurze Test dazu: {testlink} Danke dir!',
+    },
+    // Zweiter Schritt: nach dem Feedback fragen, danken, dann erst um Menschen im Umfeld bitten (Situation statt Kategorie, Entlastung)
+    feedback_danke: {
+      pfeil:    'Hey {name} 😊 hast du kurz ins Video geschaut? Was ist dir hängen geblieben? Und noch eine Frage: Kennst du jemanden, der offen für etwas Neues ist und das spannend finden könnte? Gib den Link einfach weiter, du musst niemanden überreden.',
+      funke:    'Hey {name} 😄 danke dir schon mal fürs Reinschauen! Was hat dir am besten gefallen? Und sag mal: Fällt dir jemand ein, der gerade offen für etwas Neues ist und das spannend finden könnte? Dann leite ihm das Video einfach weiter, er meldet sich, wenn er mag.',
+      anker:    'Hey {name} 😊 wie geht’s dir? Danke, dass du dir Zeit genommen hast. Was hat dir am besten gefallen? Und falls dir jemand einfällt, der gern wissen möchte, wo er gerade steht: Gib das Video einfach weiter, ganz ohne Druck. Die Person meldet sich, wenn sie mag.',
+      kristall: 'Hallo {name}, danke, dass du dir das Video angesehen hast. Wie war deine ehrliche Einschätzung? Und eine Frage noch: Kennst du jemanden, der offen für neue Wege ist und sich das gern anschauen würde? Du kannst den Link einfach weitergeben, mehr braucht es nicht. LG',
+      neutral:  'Hey {name} 😊 danke dir, dass du ins Video geschaut hast! Was hat dir am besten gefallen? Und falls dir jemand einfällt, der offen für etwas Neues ist und das spannend finden könnte: Gib das Video einfach weiter. Du musst niemanden überreden, die Person meldet sich, wenn sie mag.',
+    },
   };
+  // Begleittext zu Videos mit test: true. {link} = direkter Link zum Signalscore-Test der Person.
+  const VIDEO_TEST_TEXT = 'Wenn du neugierig bist, mach danach gern den kurzen Test (ca. 5 Minuten, anonym): {link}';
+  // Indirekte Ansprache (Tanja 09.11.2026): wenn es für den Kontakt selbst nicht passt, nach Menschen im Umfeld fragen. Situation statt Kategorie, kein Druck.
+  const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Du musst niemanden überreden. Gib einfach meine Seite weiter, dann meldet sich die Person, wenn sie mag.';
   // Nur wenn beim Kontakt „Offen für das Business-Thema“ an ist UND im Entwurf ausdrücklich gewählt.
   const BUSINESS_LINE = 'Übrigens: Falls du Lust hast, das selbst weiterzuempfehlen, erzähl ich dir gern, wie ich das mache. Ganz unverbindlich.';
 
@@ -136,6 +160,6 @@ window.CRM_DATA = (function () {
     ['lieblingswoerter', 'Lieblingswörter'], ['nie', 'Würde nie sagen'], ['sprache', 'Sprachnachricht vs. Text'],
   ];
 
-  return { STECKBRIEF_FIELDS, STATUS, ARTS, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, BUSINESS_LINE,
+  return { STECKBRIEF_FIELDS, STATUS, ARTS, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE,
     HANDBUCH: 'https://heyzine.com/flip-book/e2bfcd5caf.html' };
 })();

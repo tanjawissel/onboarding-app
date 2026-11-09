@@ -124,6 +124,8 @@
       case 'gespraech_auswertung': return `${n}: Gespräch zur Auswertung vereinbaren`;
       case 'einladung_ausprobieren': return `${n} zum Ausprobieren einladen`;
       case 'danke_pflege': return `${n}: Danke & Kundenpflege`;
+      case 'feedback_bitte': return `${n} um Feedback zum Video bitten`;
+      case 'feedback_danke': return `${n}: nach dem Feedback fragen, Danke & Empfehlung`;
       case 'sonstiges': return `${n}: ${k.follow_up_notiz || 'melden'}`;
       default: return `${n} nachfassen`;
     }
@@ -665,13 +667,17 @@
   };
   let DR = null; // { _for, art, business, text, source: 'ki'|'beispiel', loading, error, cache, token }
   const fillVideo = (text) => (DR && DR.video ? String(text).replace(/\[Video-Link\]/g, DR.video.url) : text);
-  function fillPlaceholders(k, text) {
-    return fillVideo(String(text || '').replace(/\[Name\]/g, firstName(k.name)).replace(/\[(?:Link|dein Link)\]/g, profil().superpatch_link || '[dein Link]'));
+  // Test-Einladung: direkter Link zum Signalscore-Test (aus dem Superpatch-Link erzeugt), sonst die Superpatch-Seite (Shop)
+  const linkFor = (art) => (art === 'einladung_test' ? T.testLink(profil().superpatch_link) : profil().superpatch_link) || '[dein Link]';
+  const testLinkOr = () => T.testLink(profil().superpatch_link) || '[dein Test-Link]';
+  function fillPlaceholders(k, text, art) {
+    return fillVideo(String(text || '').replace(/\[Name\]/g, firstName(k.name)).replace(/\[Test-Link\]/g, testLinkOr()).replace(/\[(?:Link|dein Link)\]/g, linkFor(art)));
   }
-  function buildDraft(k, art, business) {
+  function buildDraft(k, art, business, empfehlung) {
     const tpl = (C.DRAFTS[art] || {})[k.typ_geschaetzt || 'neutral'] || C.DRAFTS[art].neutral;
-    let text = tpl.replace(/\{name\}/g, firstName(k.name)).replace(/\{link\}/g, profil().superpatch_link || '[dein Link]');
+    let text = tpl.replace(/\{name\}/g, firstName(k.name)).replace(/\{testlink\}/g, testLinkOr()).replace(/\{link\}/g, linkFor(art));
     if (business && art !== 'business_einladung') text += '\n\n' + C.BUSINESS_LINE;
+    if (empfehlung && art !== 'business_einladung') text += '\n\n' + C.EMPFEHLUNG_LINE;
     return fillVideo(text);
   }
 
@@ -686,6 +692,8 @@
   }
   const allVideos = () => C.VIDEOS.concat(ownVideos().map((v, i) => ({ key: 'eigen' + i, titel: v.titel, url: v.url, fuer: 'dein eigener Link', eigen: i })));
   const videoOf = (key) => allVideos().find((v) => v.key === key);
+  // Link plus (bei Videos mit test: true) eigener Link zum Signalscore-Test
+  const videoMsg = (v) => (v.test && T.testLink(profil().superpatch_link) ? v.url + '\n\n' + C.VIDEO_TEST_TEXT.replace(/\{link\}/g, T.testLink(profil().superpatch_link)) : v.url);
   const validUrl = (u) => { try { const x = new URL(u); return x.protocol === 'https:'; } catch (_) { return false; } };
   // mode: 'kontakt' (Link kopieren/teilen) oder 'entwurf' (in den Entwurf einsetzen)
   function videoDialog(k, mode) {
@@ -702,7 +710,7 @@
         : mode === 'entwurf' ? `<button class="btn small" data-act="video-use" data-key="${esc(v.key)}">In den Entwurf</button>`
         : `<button class="btn small" data-act="video-copy" data-key="${esc(v.key)}">📋 Link kopieren</button>
            ${share ? `<button class="btn secondary small" data-act="video-share" data-key="${esc(v.key)}">Teilen</button>` : ''}
-           <a class="btn olive small" href="https://wa.me/${waNum}?text=${encodeURIComponent(v.url)}" target="_blank" rel="noopener">WhatsApp</a>`;
+           <a class="btn olive small" href="https://wa.me/${waNum}?text=${encodeURIComponent(videoMsg(v))}" target="_blank" rel="noopener">WhatsApp</a>`;
       return `<div class="video-item${on ? '' : ' off'}">
         <div><b>${esc(v.titel)}</b>${v.dauer ? ` <span class="small muted">· ${esc(v.dauer)}</span>` : ''}</div>
         ${v.worum ? `<div class="small">${esc(v.worum)}</div>` : ''}
@@ -733,6 +741,8 @@
   function musterText(k, text) {
     let t = String(text || '').trim();
     const link = profil().superpatch_link;
+    const test = T.testLink(link);
+    if (test) t = t.split(test).join('[Link]');
     if (link) t = t.split(link).join('[Link]');
     const fn = k && firstName(k.name);
     if (fn && fn !== '[Name]' && fn.length >= 2) {
@@ -752,11 +762,11 @@
   // opts: { fresh: true } ignoriert den Zwischenspeicher, { feedback } für „Was soll anders sein?“
   async function generate(k, opts) {
     const o = opts || {};
-    const key = `${DR.art}|${DR.business ? 1 : 0}`;
+    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung ? 1 : 0}`;
     DR.error = ''; DR.kiText = '';
     if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); DR.text = fillVideo(DR.text); render(); return; }
     if (!aiReady()) {
-      DR.text = buildDraft(k, DR.art, DR.business); DR.source = 'beispiel'; DR.loading = false;
+      DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; DR.loading = false;
       DR.cache[key] = { text: DR.text, source: DR.source };
       render(); return;
     }
@@ -767,7 +777,7 @@
     try {
       const out = await T.callWortstil({
         action: 'crm_entwurf', art: DR.art, typ: k.typ_geschaetzt || null,
-        profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business,
+        profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business, empfehlung: !!DR.empfehlung,
         muster: (T.state.muster || []).slice(0, MUSTER_MAX).map((m) => m.text),
         previous: o.feedback ? previous : undefined, feedback: o.feedback || undefined,
       });
@@ -778,9 +788,9 @@
     if (error) {
       DR.error = (AI_ERRORS[error] || 'Das hat leider nicht geklappt. Versuch es bitte nochmal.') + ` (Fehlercode: ${error})`;
       // Bei einem neuen Versuch bleibt der bisherige Text stehen, sonst gibt es den Beispielentwurf.
-      if (!previous) { DR.text = buildDraft(k, DR.art, DR.business); DR.source = 'beispiel'; }
+      if (!previous) { DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; }
     } else {
-      DR.text = fillPlaceholders(k, text); DR.source = 'ki'; DR.kiText = DR.text;
+      DR.text = fillPlaceholders(k, text, DR.art); DR.source = 'ki'; DR.kiText = DR.text;
       DR.cache[key] = { text: DR.text, source: DR.source, kiText: DR.kiText };
     }
     if (T.route().name === 'entwurf') render();
@@ -796,6 +806,8 @@
     const hasSb = !!T.state.steckbrief;
     const needsLink = /einladung_test|einladung_ausprobieren/.test(DR.art) && !p.superpatch_link;
     const isBiz = DR.art === 'business_einladung';
+    const withVideo = !!artOf(DR.art).video; // Art lebt vom Video (Business-Einladung, Feedback-Bitte)
+    const noEmpf = isBiz || /^feedback_/.test(DR.art); // Feedback: Empfehlungsfrage erst im zweiten Schritt (feedback_danke)
     const waNum = (k.telefon || '').replace(/[^\d]/g, '');
     const off = DR.loading ? 'disabled' : '';
     const hint = DR.source === 'ki'
@@ -812,11 +824,13 @@
         <p style="margin-top:0"><b>Entwürfe von der KI in deinem Ton?</b></p>
         <p class="small">Dafür gehen dein Steckbrief, deine Musternachrichten, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zu diesem Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts. Du kannst das im Profil jederzeit wieder ausschalten.</p>
         <div class="actions" style="margin-top:6px"><button class="btn small" data-act="ki-on" ${off}>KI-Entwürfe einschalten</button></div></div>`}
+      ${noEmpf ? '' : `<label class="check"><input type="checkbox" data-act="empfehlung" ${DR.empfehlung ? 'checked' : ''} ${off}><span>Zusätzlich um Kontakte aus seinem Umfeld bitten <span class="muted small">(wenn es für ${esc(firstName(k.name))} selbst nicht passt, kennt er vielleicht jemanden)</span></span></label>`}
       ${k.business_offen && !isBiz ? `<label class="check"><input type="checkbox" data-act="business" ${DR.business ? 'checked' : ''} ${off}><span>Business-Thema erwähnen <span class="muted small">(nur weil du es beim Kontakt freigeschaltet hast)</span></span></label>` : ''}
-      ${isBiz ? `<div class="card sand video-pick">
+      ${withVideo ? `<div class="card sand video-pick">
         <div class="card-head"><div>🎬 <b>Video:</b> ${DR.video ? esc(DR.video.titel) : '<span class="muted">noch keins gewählt</span>'}</div>
         <button class="btn secondary small" data-act="video-pick" ${off}>${DR.video ? 'ändern' : 'Video wählen'}</button></div>
-        <div class="small muted">Es ersetzt [Video-Link] im Entwurf. Die Entscheidung bleibt bei ${esc(firstName(k.name))}: kein Druck, keine Zahlen, keine Versprechen.</div></div>` : ''}
+        <div class="small muted">Es ersetzt [Video-Link] im Entwurf. Die Entscheidung bleibt bei ${esc(firstName(k.name))}: ${isBiz ? 'kein Druck, keine Zahlen, keine Versprechen' : 'ehrliches Feedback, ein Nein ist völlig in Ordnung'}.</div></div>`
+        : `<div class="actions"><button class="btn ghost small" data-act="video-pick" ${off}>🎬 ${DR.video ? 'Video ändern: ' + esc(DR.video.titel) : 'Video in den Entwurf einfügen'}</button></div>`}
       <label class="field" for="d-text">Entwurf <span class="opt">(bearbeitbar)</span></label>
       ${DR.loading ? '<div class="draft-area thinking-box"><div class="thinking"><span class="dot"></span>Die KI schreibt deinen Entwurf …</div></div>'
         : `<textarea id="d-text" class="draft-area" maxlength="2000">${esc(DR.text)}</textarea>`}
@@ -868,6 +882,9 @@
     const next = artOf(art).next;
     const target = next && statusIndex(next) > statusIndex(k.status) ? next : k.status;
     statusDialog(k, target, 'Nachricht verschickt?', `Wenn du sie abgeschickt hast: ${target !== k.status ? 'Status und Follow-up' : 'Follow-up'} eintragen?`, true);
+    // Art mit eigenem nächsten Schritt (z. B. Feedback-Bitte → nach 3 Tagen Danke + Empfehlungsfrage)
+    const fu = artOf(art).fu;
+    if (fu && M) { M.fuOn = true; M.fuDate = addDays(today(), fu.tage); M.fuArt = fu.art; renderStatusDialog(); }
   }
 
   // ---------- Dialoge ----------
@@ -1135,6 +1152,7 @@
       // Entwurf
       case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; generate(k); return;
       case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; generate(k); return;
+      case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; generate(k); return;
       case 'ki-on': return once(async () => {
         const row = await db(sb.from('profil').update({ einwilligung_ki_am: new Date().toISOString() }).eq('id', T.state.session.user.id).select().single());
         if (!row) return;
@@ -1191,10 +1209,10 @@
       // Videos
       case 'video-teilen': videoDialog(k, 'kontakt'); return;
       case 'video-pick': if (DR.loading) return; videoDialog(k, 'entwurf'); return;
-      case 'video-copy': { const v = videoOf(el.dataset.key); if (v) T.copyText(v.url, 'Link kopiert. Jetzt selbst verschicken.'); return; }
+      case 'video-copy': { const v = videoOf(el.dataset.key); if (v) T.copyText(videoMsg(v), 'Link kopiert. Jetzt selbst verschicken.'); return; }
       case 'video-share': {
         const v = videoOf(el.dataset.key);
-        if (v && navigator.share) navigator.share({ title: v.titel, url: v.url }).catch(() => {});
+        if (v && navigator.share) navigator.share({ title: v.titel, text: videoMsg(v) }).catch(() => {});
         return;
       }
       case 'video-use': {
