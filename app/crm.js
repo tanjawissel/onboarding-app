@@ -332,6 +332,7 @@
         <a class="btn wide" href="#/entwurf/${esc(k.id)}">✉ Nachricht vorschlagen</a>
         <a class="btn secondary" href="#/sprachnotiz?k=${esc(k.id)}">🎙 Gespräch notieren</a>
         <button class="btn secondary" data-act="note">✎ Notiz</button>
+        <button class="btn secondary" data-act="video-teilen">🎬 Video teilen</button>
       </div>
 
       <section class="card">
@@ -556,14 +557,63 @@
     server_config: 'Die KI ist gerade nicht richtig eingerichtet. Gib Tanja bitte kurz Bescheid.',
   };
   let DR = null; // { _for, art, business, text, source: 'ki'|'beispiel', loading, error, cache, token }
+  const fillVideo = (text) => (DR && DR.video ? String(text).replace(/\[Video-Link\]/g, DR.video.url) : text);
   function fillPlaceholders(k, text) {
-    return String(text || '').replace(/\[Name\]/g, firstName(k.name)).replace(/\[(?:Link|dein Link)\]/g, profil().superpatch_link || '[dein Link]');
+    return fillVideo(String(text || '').replace(/\[Name\]/g, firstName(k.name)).replace(/\[(?:Link|dein Link)\]/g, profil().superpatch_link || '[dein Link]'));
   }
   function buildDraft(k, art, business) {
     const tpl = (C.DRAFTS[art] || {})[k.typ_geschaetzt || 'neutral'] || C.DRAFTS[art].neutral;
     let text = tpl.replace(/\{name\}/g, firstName(k.name)).replace(/\{link\}/g, profil().superpatch_link || '[dein Link]');
-    if (business) text += '\n\n' + C.BUSINESS_LINE;
-    return text;
+    if (business && art !== 'business_einladung') text += '\n\n' + C.BUSINESS_LINE;
+    return fillVideo(text);
+  }
+
+  // ---------- Videos teilen (Tanja 09.11.2026) ----------
+  // Feste Liste in crm-data.js (VIDEOS). Eigene Links liegen nur auf diesem Gerät (localStorage), nicht in der Datenbank.
+  const OWN_KEY = 'tw-eigene-videos';
+  function ownVideos() {
+    try { const a = JSON.parse(localStorage.getItem(OWN_KEY) || '[]'); return Array.isArray(a) ? a.filter((v) => v && v.url && v.titel) : []; } catch (_) { return []; }
+  }
+  function saveOwnVideos(list) {
+    try { localStorage.setItem(OWN_KEY, JSON.stringify(list.slice(0, 10))); return true; } catch (_) { toast('Speichern hat auf diesem Gerät nicht geklappt.'); return false; }
+  }
+  const allVideos = () => C.VIDEOS.concat(ownVideos().map((v, i) => ({ key: 'eigen' + i, titel: v.titel, url: v.url, fuer: 'dein eigener Link', eigen: i })));
+  const videoOf = (key) => allVideos().find((v) => v.key === key);
+  const validUrl = (u) => { try { const x = new URL(u); return x.protocol === 'https:'; } catch (_) { return false; } };
+  // mode: 'kontakt' (Link kopieren/teilen) oder 'entwurf' (in den Entwurf einsetzen)
+  function videoDialog(k, mode) {
+    M = { type: 'video', k, mode };
+    renderVideoDialog();
+  }
+  function renderVideoDialog() {
+    const { k, mode } = M;
+    const share = !!navigator.share;
+    const waNum = (k.telefon || '').replace(/[^\d]/g, '');
+    const row = (v) => {
+      const on = !!v.url;
+      const btns = !on ? '<span class="small muted">kommt bald</span>'
+        : mode === 'entwurf' ? `<button class="btn small" data-act="video-use" data-key="${esc(v.key)}">In den Entwurf</button>`
+        : `<button class="btn small" data-act="video-copy" data-key="${esc(v.key)}">📋 Link kopieren</button>
+           ${share ? `<button class="btn secondary small" data-act="video-share" data-key="${esc(v.key)}">Teilen</button>` : ''}
+           <a class="btn olive small" href="https://wa.me/${waNum}?text=${encodeURIComponent(v.url)}" target="_blank" rel="noopener">WhatsApp</a>`;
+      return `<div class="video-item${on ? '' : ' off'}">
+        <div><b>${esc(v.titel)}</b>${v.dauer ? ` <span class="small muted">· ${esc(v.dauer)}</span>` : ''}</div>
+        ${v.worum ? `<div class="small">${esc(v.worum)}</div>` : ''}
+        <div class="small muted">Passt ${esc(v.fuer)}</div>
+        <div class="actions" style="margin-top:6px">${btns}${v.eigen != null ? ` <button class="btn ghost small" data-act="video-own-del" data-i="${v.eigen}" aria-label="Eigenen Link entfernen">✕</button>` : ''}</div>
+      </div>`;
+    };
+    openModal(`
+      <h2>${mode === 'entwurf' ? 'Welches Video passt?' : `Video für ${esc(firstName(k.name))}`}</h2>
+      <p class="small muted">Wähl das Video, das zu ${esc(firstName(k.name))} passt. Du verschickst es selbst.</p>
+      <div class="video-list">${allVideos().map(row).join('')}</div>
+      <details style="margin-top:10px"><summary class="small"><b>＋ Eigenen Video-Link ergänzen</b></summary>
+        <p class="small muted">Nur auf diesem Gerät gespeichert. Bitte nur Videos, die du teilen darfst und die die festen Regeln einhalten (keine Heil- oder Einkommensversprechen).</p>
+        <input type="text" id="m-vt" maxlength="60" placeholder="Titel, z. B. Mein Story-Video">
+        <input type="url" id="m-vu" maxlength="300" placeholder="https://…" style="margin-top:6px">
+        <div class="actions"><button class="btn secondary small" data-act="video-own-add">Hinzufügen</button></div>
+      </details>
+      <div class="actions end"><button class="btn ghost" data-act="modal-close">Schließen</button></div>`);
   }
   function notesForAi(k) {
     const words = [firstName(k.name)].filter((w) => w.length >= 2).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -597,7 +647,7 @@
     const o = opts || {};
     const key = `${DR.art}|${DR.business ? 1 : 0}`;
     DR.error = ''; DR.kiText = '';
-    if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); render(); return; }
+    if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); DR.text = fillVideo(DR.text); render(); return; }
     if (!aiReady()) {
       DR.text = buildDraft(k, DR.art, DR.business); DR.source = 'beispiel'; DR.loading = false;
       DR.cache[key] = { text: DR.text, source: DR.source };
@@ -638,6 +688,7 @@
     const t = k.typ_geschaetzt && C.TYPES[k.typ_geschaetzt];
     const hasSb = !!T.state.steckbrief;
     const needsLink = /einladung_test|einladung_ausprobieren/.test(DR.art) && !p.superpatch_link;
+    const isBiz = DR.art === 'business_einladung';
     const waNum = (k.telefon || '').replace(/[^\d]/g, '');
     const off = DR.loading ? 'disabled' : '';
     const hint = DR.source === 'ki'
@@ -646,7 +697,7 @@
     return `
       <a class="back" href="#/kontakt/${esc(k.id)}">← ${esc(k.name)}</a>
       <h1>Nachricht an ${esc(firstName(k.name))}</h1>
-      <div class="art-chips" role="tablist">${C.ARTS.map((a) => `<button class="chip ${DR.art === a.key ? 'on' : ''}" data-act="art" data-art="${a.key}" role="tab" aria-selected="${DR.art === a.key}" ${off}>${a.short}</button>`).join('')}</div>
+      <div class="art-chips" role="tablist">${C.ARTS.filter((a) => !a.business || k.business_offen || DR.art === a.key).map((a) => `<button class="chip ${DR.art === a.key ? 'on' : ''}" data-act="art" data-art="${a.key}" role="tab" aria-selected="${DR.art === a.key}" ${off}>${a.short}</button>`).join('')}</div>
       <p class="type-line">${t ? `Typ: ${t.icon} ${t.name} (geschätzt) bestimmt den Aufbau` : 'Typ: weiß ich noch nicht, darum ein neutraler Aufbau'} · Stimme: ${hasSb && aiReady() ? 'deine' : 'neutral'}</p>
       ${hasSb ? '' : '<p class="notice warm">Mach zuerst die <a href="#/kompass">Wortstil-Probe</a> (ca. 10 Min.), dann klingen die Entwürfe nach dir.</p>'}
       ${needsLink ? '<p class="notice warm">Trag im <a href="#/profil">Profil</a> „Mein Superpatch-Link“ ein, dann steht er direkt im Entwurf.</p>' : ''}
@@ -654,11 +705,16 @@
         <p style="margin-top:0"><b>Entwürfe von der KI in deinem Ton?</b></p>
         <p class="small">Dafür gehen dein Steckbrief, deine Musternachrichten, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zu diesem Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts. Du kannst das im Profil jederzeit wieder ausschalten.</p>
         <div class="actions" style="margin-top:6px"><button class="btn small" data-act="ki-on" ${off}>KI-Entwürfe einschalten</button></div></div>`}
-      ${k.business_offen ? `<label class="check"><input type="checkbox" data-act="business" ${DR.business ? 'checked' : ''} ${off}><span>Business-Thema erwähnen <span class="muted small">(nur weil du es beim Kontakt freigeschaltet hast)</span></span></label>` : ''}
+      ${k.business_offen && !isBiz ? `<label class="check"><input type="checkbox" data-act="business" ${DR.business ? 'checked' : ''} ${off}><span>Business-Thema erwähnen <span class="muted small">(nur weil du es beim Kontakt freigeschaltet hast)</span></span></label>` : ''}
+      ${isBiz ? `<div class="card sand video-pick">
+        <div class="card-head"><div>🎬 <b>Video:</b> ${DR.video ? esc(DR.video.titel) : '<span class="muted">noch keins gewählt</span>'}</div>
+        <button class="btn secondary small" data-act="video-pick" ${off}>${DR.video ? 'ändern' : 'Video wählen'}</button></div>
+        <div class="small muted">Es ersetzt [Video-Link] im Entwurf. Die Entscheidung bleibt bei ${esc(firstName(k.name))}: kein Druck, keine Zahlen, keine Versprechen.</div></div>` : ''}
       <label class="field" for="d-text">Entwurf <span class="opt">(bearbeitbar)</span></label>
       ${DR.loading ? '<div class="draft-area thinking-box"><div class="thinking"><span class="dot"></span>Die KI schreibt deinen Entwurf …</div></div>'
         : `<textarea id="d-text" class="draft-area" maxlength="2000">${esc(DR.text)}</textarea>`}
       ${DR.error ? `<p class="notice warm">${esc(DR.error)}</p>` : ''}
+      <p id="grund-tipp" class="notice warm small" ${!DR.loading && /\[Grund\]/.test(DR.text) ? '' : 'hidden'}>Ersetze [Grund] durch deinen echten Grund, warum du an ${esc(firstName(k.name))} denkst. Das macht die Nachricht persönlich.</p>
       <p class="small muted" style="margin-top:6px">${esc(hint)}</p>
       <div class="actions">
         <button class="btn secondary small" data-act="retry" ${off}>↻ Neuer Versuch</button>
@@ -693,6 +749,8 @@
       DR.text = ta.value;
       const tipp = document.getElementById('muster-tipp');
       if (tipp) tipp.hidden = !(DR.kiText && DR.text.trim() !== DR.kiText.trim());
+      const gt = document.getElementById('grund-tipp');
+      if (gt) gt.hidden = !/\[Grund\]/.test(DR.text);
       const wa = document.querySelector('[data-act=wa]');
       if (wa) wa.href = wa.href.split('?')[0] + '?text=' + encodeURIComponent(DR.text);
     });
@@ -1002,6 +1060,38 @@
         if (!await db(sb.from('wortstil_muster').delete().eq('id', el.dataset.id))) return;
         T.state.muster = (T.state.muster || []).filter((m) => m.id !== el.dataset.id); render();
       });
+      // Videos
+      case 'video-teilen': videoDialog(k, 'kontakt'); return;
+      case 'video-pick': if (DR.loading) return; videoDialog(k, 'entwurf'); return;
+      case 'video-copy': { const v = videoOf(el.dataset.key); if (v) T.copyText(v.url, 'Link kopiert. Jetzt selbst verschicken.'); return; }
+      case 'video-share': {
+        const v = videoOf(el.dataset.key);
+        if (v && navigator.share) navigator.share({ title: v.titel, url: v.url }).catch(() => {});
+        return;
+      }
+      case 'video-use': {
+        const v = videoOf(el.dataset.key);
+        if (!v || !DR) return;
+        const ta = document.getElementById('d-text');
+        if (ta) DR.text = ta.value;
+        const old = DR.video && DR.video.url;
+        DR.video = { titel: v.titel, url: v.url };
+        if (old && old !== v.url) DR.text = DR.text.split(old).join(v.url);
+        if (/\[Video-Link\]/.test(DR.text)) DR.text = fillVideo(DR.text);
+        else if (!DR.text.includes(v.url)) DR.text = DR.text.trim() + ' ' + v.url;
+        closeModal(); render(); return;
+      }
+      case 'video-own-add': {
+        const titel = document.getElementById('m-vt').value.trim(), url = document.getElementById('m-vu').value.trim();
+        if (!titel || !validUrl(url)) { toast('Bitte einen Titel und einen Link mit https:// eintragen.'); return; }
+        if (saveOwnVideos(ownVideos().concat({ titel: titel.slice(0, 60), url: url.slice(0, 300) }))) renderVideoDialog();
+        return;
+      }
+      case 'video-own-del': {
+        const list = ownVideos(); list.splice(Number(el.dataset.i), 1);
+        if (saveOwnVideos(list)) renderVideoDialog();
+        return;
+      }
       case 'copy': T.copyText(DR.text, 'Kopiert. Jetzt selbst verschicken.'); afterSent(k, 'kopiert'); return;
       case 'wa': setTimeout(() => afterSent(k, 'whatsapp'), 300); return; // Link öffnet WhatsApp in neuem Tab
     }

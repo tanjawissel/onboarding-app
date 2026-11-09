@@ -73,7 +73,7 @@
   };
   const D4_SUGGEST = {
     pfeil: 'Erst fragen, dann erzählen.',
-    funke: 'Jeden Kontakt innerhalb von 7 Tagen nachfassen.',
+    funke: 'Jeden Kontakt innerhalb von 72 Stunden nachfassen.',
     anker: 'Ich lade ein, ohne mich dafür zu entschuldigen.',
     kristall: 'Ich führe Gespräche, bevor ich alles weiß.',
   };

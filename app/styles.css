@@ -370,3 +370,10 @@ ol.anl li { margin: 0 0 6px; }
 .tage .tag input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
 a.option { display: block; text-decoration: none; color: inherit; }
 .wrap a.tile, .wrap a.tile .t-label { color: inherit; }
+
+/* Videos teilen (09.11.2026) */
+.video-list { display: grid; gap: 10px; max-height: 55vh; overflow-y: auto; }
+.video-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.video-item.off { opacity: .6; }
+.video-item .actions { flex-wrap: wrap; gap: 6px; }
+.video-pick .card-head { gap: 10px; flex-wrap: wrap; }
