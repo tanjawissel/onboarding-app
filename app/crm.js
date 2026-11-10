@@ -790,7 +790,9 @@
       // Bei einem neuen Versuch bleibt der bisherige Text stehen, sonst gibt es den Beispielentwurf.
       if (!previous) { DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; }
     } else {
-      DR.text = fillPlaceholders(k, text, DR.art); DR.source = 'ki'; DR.kiText = DR.text;
+      DR.text = fillPlaceholders(k, text, DR.art);
+      if (DR.video && !DR.text.includes(DR.video.url)) DR.text = DR.text.trim() + ' ' + DR.video.url;
+      DR.source = 'ki'; DR.kiText = DR.text;
       DR.cache[key] = { text: DR.text, source: DR.source, kiText: DR.kiText };
     }
     if (T.route().name === 'entwurf') render();
@@ -799,7 +801,7 @@
     const k = kontakt(r.id);
     if (!k) return '<p>Diesen Kontakt gibt es nicht mehr.</p>';
     if (!DR || DR._for !== k.id) {
-      DR = { _for: k.id, art: r.params.art || statusOf(k.status).art, business: false, text: '', source: '', loading: false, error: '', cache: {}, token: 0, _new: true };
+      DR = { _for: k.id, art: r.params.art || statusOf(k.status).art, business: false, text: '', source: '', loading: false, error: '', cache: {}, token: 0, started: false };
     }
     const p = profil();
     const t = k.typ_geschaetzt && C.TYPES[k.typ_geschaetzt];
@@ -817,6 +819,7 @@
     return `
       <a class="back" href="#/kontakt/${esc(k.id)}">← ${esc(k.name)}</a>
       <h1>Nachricht an ${esc(firstName(k.name))}</h1>
+      ${DR.started ? '' : '<p style="margin-bottom:6px"><b>Welche Nachricht möchtest du schreiben?</b> <span class="small muted">Vorausgewählt ist der Vorschlag zum Status.</span></p>'}
       <div class="art-chips" role="tablist">${C.ARTS.filter((a) => !a.business || k.business_offen || DR.art === a.key).map((a) => `<button class="chip ${DR.art === a.key ? 'on' : ''}" data-act="art" data-art="${a.key}" role="tab" aria-selected="${DR.art === a.key}" ${off}>${a.short}</button>`).join('')}</div>
       <p class="type-line">${t ? `Typ: ${t.icon} ${t.name} (geschätzt) bestimmt den Aufbau` : 'Typ: weiß ich noch nicht, darum ein neutraler Aufbau'} · Stimme: ${hasSb && aiReady() ? 'deine' : 'neutral'}</p>
       ${hasSb ? '' : '<p class="notice warm">Mach zuerst die <a href="#/kompass">Wortstil-Probe</a> (ca. 10 Min.), dann klingen die Entwürfe nach dir.</p>'}
@@ -832,6 +835,8 @@
         <button class="btn secondary small" data-act="video-pick" ${off}>${DR.video ? 'ändern' : 'Video wählen'}</button></div>
         <div class="small muted">Es ersetzt [Video-Link] im Entwurf. Die Entscheidung bleibt bei ${esc(firstName(k.name))}: ${isBiz ? 'kein Druck, keine Zahlen, keine Versprechen' : 'ehrliches Feedback, ein Nein ist völlig in Ordnung'}.</div></div>`
         : `<div class="actions"><button class="btn ghost small" data-act="video-pick" ${off}>🎬 ${DR.video ? 'Video ändern: ' + esc(DR.video.titel) : 'Video in den Entwurf einfügen'}</button></div>`}
+      ${!DR.started ? `<div class="actions" style="margin-top:14px"><button class="btn wide" data-act="start">✍ ${aiReady() ? 'Entwurf schreiben' : 'Beispielentwurf zeigen'}: ${esc(artOf(DR.art).name || 'Nachricht')}</button></div>
+      <p class="small muted" style="text-align:center;margin-top:8px">Erst wählen, dann schreibt ${aiReady() ? 'die KI' : 'die App'} den Entwurf.</p>${musterCard()}` : `
       <label class="field" for="d-text">Entwurf <span class="opt">(bearbeitbar)</span></label>
       ${DR.loading ? '<div class="draft-area thinking-box"><div class="thinking"><span class="dot"></span>Die KI schreibt deinen Entwurf …</div></div>'
         : `<textarea id="d-text" class="draft-area" maxlength="2000">${esc(DR.text)}</textarea>`}
@@ -851,7 +856,7 @@
         ${DR.loading ? '<button class="btn olive" disabled>WhatsApp</button>'
           : `<a class="btn olive" data-act="wa" href="https://wa.me/${waNum}?text=${encodeURIComponent(DR.text)}" target="_blank" rel="noopener">${waNum ? 'In WhatsApp öffnen' : 'WhatsApp (Chat wählen)'}</a>`}
       </div>
-      <p class="small muted" style="text-align:center;margin-top:10px">Du verschickst die Nachricht selbst. Die App versendet nie.</p>`;
+      <p class="small muted" style="text-align:center;margin-top:10px">Du verschickst die Nachricht selbst. Die App versendet nie.</p>`}`;
   }
   function musterCard() {
     const list = T.state.muster || [];
@@ -864,7 +869,6 @@
     </details>`;
   }
   function afterEntwurf(r) {
-    if (DR && DR._new) { DR._new = false; const k = kontakt(r.id); if (k) generate(k); return; }
     const ta = document.getElementById('d-text');
     if (!ta) return;
     ta.addEventListener('input', () => {
@@ -1151,13 +1155,14 @@
       case 'rec-save': return saveRec(el);
 
       // Entwurf
-      case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; generate(k); return;
-      case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; generate(k); return;
-      case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; generate(k); return;
+      case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; if (DR.started) generate(k); else render(); return;
+      case 'start': if (DR.loading) return; DR.started = true; DR.text = ''; generate(k); return;
+      case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
+      case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
       case 'ki-on': return once(async () => {
         const row = await db(sb.from('profil').update({ einwilligung_ki_am: new Date().toISOString() }).eq('id', T.state.session.user.id).select().single());
         if (!row) return;
-        T.state.profil = row; DR.cache = {}; DR.text = ''; generate(k);
+        T.state.profil = row; DR.cache = {}; DR.text = ''; if (DR.started) generate(k); else render();
       });
       case 'retry':
         if (!aiReady()) { toast('Ohne KI gibt es pro Art und Typ einen Beispielentwurf.'); return; }
@@ -1223,6 +1228,7 @@
         if (ta) DR.text = ta.value;
         const old = DR.video && DR.video.url;
         DR.video = { titel: v.titel, url: v.url };
+        if (!DR.started) { closeModal(); render(); return; } // wird beim Schreiben eingesetzt
         if (old && old !== v.url) DR.text = DR.text.split(old).join(v.url);
         if (/\[Video-Link\]/.test(DR.text)) DR.text = fillVideo(DR.text);
         else if (!DR.text.includes(v.url)) DR.text = DR.text.trim() + ' ' + v.url;
