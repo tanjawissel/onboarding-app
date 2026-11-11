@@ -35,10 +35,11 @@ window.CRM_DATA = (function () {
   // Fassung 1–3 bewusst nicht in der Liste. Zeile + titel/worum/fuer ergänzen, sobald Tanja sie freigibt.
   const VIDEOS = [
     // Dateinamen ohne Zielgruppe, weil Kontakte den Link sehen (Tanja 09.11.2026). Die alten Dateien in /videos bleiben liegen, damit schon verschickte Links weiter gehen.
-    // Fassung 6 „Welche Signale gibt dir dein Körper?“, abgenommen 09.11.2026 (Kundenweg, jung und alt, Einladung zum Test). In der App „Signal-Score“ genannt (Tanja 09.11.2026). Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-6_9x16_klein.mp4
-    { key: 'vision6',     titel: 'Video „Signal-Score“', dauer: '2 Min.',
-      url: 'https://app.tanjawissel.ch/videos/signal-score.mp4',
-      worum: 'Einladung zum kurzen Test: herausfinden, welche Signale der eigene Körper gibt',
+    // Fassung 7 ersetzt Fassung 6 (Tanja 11.11.2026: „F6 ersetzen“): verständlicher, Tanjas eigene Stimme, nur ein Ziel (der Test). Key bleibt 'vision6'.
+    // Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-7_9x16_klein.mp4. F6 liegt weiter unter /videos/signal-score.mp4, damit verschickte Links gehen.
+    { key: 'vision6',     titel: 'Video „Signal-Score“', dauer: '1,5 Min.',
+      url: 'https://app.tanjawissel.ch/videos/signal-score-test.mp4',
+      worum: 'Kleine Patches für die Haut und der kurze Test (anonym, ca. 5 Min.): herausfinden, welche passen könnten',
       // Test-Link nur auf Anfrage (Tanja 09.11.2026): kein automatischer Anhang mehr (früher test: true)
       fuer: 'für Kundenkontakte jeden Alters; den Test-Link schickst du erst, wenn der Kontakt danach fragt' },
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
