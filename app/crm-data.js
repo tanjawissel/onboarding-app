@@ -150,6 +150,13 @@ window.CRM_DATA = (function () {
   };
   // Begleittext zu Videos mit test: true. {link} = direkter Link zum Signalscore-Test der Person.
   const VIDEO_TEST_TEXT = 'Wenn du neugierig bist, mach danach gern den kurzen Test (ca. 5 Minuten, anonym): {link}';
+  // Beispielentwurf je Video und Art (ohne KI), ersetzt dann DRAFTS[art]. Die KI bekommt dieselbe Vorgabe (VIDEO_KONTEXT in wortstil-prompts.js).
+  // Signal-Score (Fassung 7), Tanja 12.11.2026 freigegeben: nach Feedback auf F6 sagt die Nachricht, worum es geht und was die Bitte ist. Test-Link nur auf Anfrage.
+  const VIDEO_DRAFTS = {
+    vision6: {
+      feedback_bitte: 'Hey {name}, wie geht’s dir? Wir hören uns ja eher selten, deshalb freut es mich umso mehr, wenn ich dich mal was fragen darf. Ich beschäftige mich gerade mit kleinen Patches, die man auf die Haut klebt. Dazu gibt es einen kurzen, anonymen Test (ca. 5 Minuten), mit dem du herausfindest, welche davon zu dir passen könnten. Worum es geht, siehst du in diesem Video (knapp anderthalb Minuten): [Video-Link] Schau es dir gern an und sag mir ehrlich, wie du es findest. Wenn du den Test machen möchtest, schick ich dir deinen persönlichen Link. Und wenn gerade keine Zeit ist, ist das total okay. Danke dir 😊',
+    },
+  };
   // Indirekte Ansprache (Tanja 09.11.2026), nur beim Nachfassen, nie in der ersten Nachricht: wenn es für den Kontakt selbst nicht passt, nach Menschen im Umfeld fragen. Situation statt Kategorie, kein Druck.
   const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Du musst niemanden überreden. Sag mir einfach Bescheid, dann schick ich dir den Link zum Weitergeben.';
   // Nur wenn beim Kontakt „Offen für das Business-Thema“ an ist UND im Entwurf ausdrücklich gewählt.
@@ -162,6 +169,6 @@ window.CRM_DATA = (function () {
     ['lieblingswoerter', 'Lieblingswörter'], ['nie', 'Würde nie sagen'], ['sprache', 'Sprachnachricht vs. Text'],
   ];
 
-  return { STECKBRIEF_FIELDS, STATUS, ARTS, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE,
+  return { STECKBRIEF_FIELDS, STATUS, ARTS, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE,
     HANDBUCH: 'https://heyzine.com/flip-book/e2bfcd5caf.html' };
 })();

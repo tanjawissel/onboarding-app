@@ -674,7 +674,8 @@
     return fillVideo(String(text || '').replace(/\[Name\]/g, firstName(k.name)).replace(/\[Test-Link\]/g, testLinkOr()).replace(/\[(?:Link|dein Link)\]/g, linkFor(art)));
   }
   function buildDraft(k, art, business, empfehlung) {
-    const tpl = (C.DRAFTS[art] || {})[k.typ_geschaetzt || 'neutral'] || C.DRAFTS[art].neutral;
+    const vd = DR && DR.video && C.VIDEO_DRAFTS[DR.video.key]; // eigener Text je Video (z. B. Signal-Score)
+    const tpl = (vd && vd[art]) || (C.DRAFTS[art] || {})[k.typ_geschaetzt || 'neutral'] || C.DRAFTS[art].neutral;
     let text = tpl.replace(/\{name\}/g, firstName(k.name)).replace(/\{testlink\}/g, testLinkOr()).replace(/\{link\}/g, linkFor(art));
     if (business && art !== 'business_einladung') text += '\n\n' + C.BUSINESS_LINE;
     if (empfehlung && art === 'nachfassen') text += '\n\n' + C.EMPFEHLUNG_LINE;
@@ -762,7 +763,7 @@
   // opts: { fresh: true } ignoriert den Zwischenspeicher, { feedback } für „Was soll anders sein?“
   async function generate(k, opts) {
     const o = opts || {};
-    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung && DR.art === 'nachfassen' ? 1 : 0}`;
+    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung && DR.art === 'nachfassen' ? 1 : 0}|${(DR.video && DR.video.key) || ''}`;
     DR.error = ''; DR.kiText = '';
     if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); DR.text = fillVideo(DR.text); render(); return; }
     if (!aiReady()) {
@@ -779,6 +780,7 @@
         action: 'crm_entwurf', art: DR.art, typ: k.typ_geschaetzt || null,
         profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business, empfehlung: !!DR.empfehlung && DR.art === 'nachfassen',
         muster: (T.state.muster || []).slice(0, MUSTER_MAX).map((m) => m.text),
+        video: (DR.video && DR.video.key) || undefined, // nur der Schlüssel, den Text dazu hat der Server
         previous: o.feedback ? previous : undefined, feedback: o.feedback || undefined,
       });
       if (!out.text) error = 'upstream_error'; else text = out.text;
@@ -1227,8 +1229,12 @@
         const ta = document.getElementById('d-text');
         if (ta) DR.text = ta.value;
         const old = DR.video && DR.video.url;
-        DR.video = { titel: v.titel, url: v.url };
+        const ownText = (key) => !!(key && C.VIDEO_DRAFTS[key] && C.VIDEO_DRAFTS[key][DR.art]);
+        const oldKey = DR.video && DR.video.key;
+        DR.video = { key: v.key, titel: v.titel, url: v.url };
         if (!DR.started) { closeModal(); render(); return; } // wird beim Schreiben eingesetzt
+        // Video mit eigenem Text (z. B. Signal-Score) gewechselt: Entwurf passend neu schreiben
+        if (oldKey !== v.key && (ownText(oldKey) || ownText(v.key)) && M && M.k) { const vk = M.k; closeModal(); generate(vk); return; }
         if (old && old !== v.url) DR.text = DR.text.split(old).join(v.url);
         if (/\[Video-Link\]/.test(DR.text)) DR.text = fillVideo(DR.text);
         else if (!DR.text.includes(v.url)) DR.text = DR.text.trim() + ' ' + v.url;
