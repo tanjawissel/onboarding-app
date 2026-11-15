@@ -9,10 +9,10 @@ Ausgeliefert über GitHub Pages unter https://app.tanjawissel.ch (DNS bei cyon: 
 - `app/kompass.js` – Freiheits-Kompass und Wortstil-Probe. Gespeichert werden nur Ergebnis, Rahmen, Ziele, Freigaben und Steckbrief, nie Einzelantworten
 - `app/erinnerungen.js` – Erinnerungen (Bereich 5): Home-Bildschirm-Anleitung, Push einschalten (Einwilligung), Profil › Erinnerungen, Kalender-Abo, Karte „Deine ersten Schritte“, Einladung per Mail
 - `sw.js`, `manifest.webmanifest`, `icons/` – installierbare App (PWA): Push empfangen, offline starten, App-Symbol
-- `app/crm-data.js`, `app/kompass-data.js` – Kopien der Stammdaten aus `../Prototyp CRM/data.js` und `../Prototyp Freiheits-Kompass/data.js`
+- `app/crm-data.js` – Stammdaten des CRM (hier ändern; der alte Klick-Prototyp liegt seit 15.11.2026 in `../_archiv/`)
+- `app/kompass-data.js` – Kopie der Stammdaten aus `../Prototyp Freiheits-Kompass/data.js`
 - `app/vendor/supabase-2.117.2.js` – supabase-js (MIT), lokal eingebunden statt aus einem CDN
 - `datenschutz.html` – vorläufige Datenschutzhinweise für die Testphase (endgültige Fassung kommt aus Bereich 4)
-- `prototyp/` – Kopie von `Prototyp CRM/` (klickbar, Daten nur im Browser)
 - `fonts/` – Schriften lokal (keine Google-Fonts-Anfragen)
 - `CNAME` – eigene Domain für GitHub Pages
 

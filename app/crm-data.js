@@ -1,4 +1,5 @@
-// Kopie aus „Prototyp CRM/data.js“ (Stammdaten, Statuswerte, Beispielentwürfe ohne KI). Dort ändern und neu kopieren.
+// Stammdaten, Statuswerte, Beispielentwürfe ohne KI. Diese Datei ist die Quelle: hier ändern.
+// (Ursprung: Klick-Prototyp „Prototyp CRM“ vom 20.10.2026, seit 15.11.2026 in _archiv/.)
 /* Stammdaten des CRM-Prototyps. Quelle: „CRM - Datenmodell und Skizzen“ (freigegeben 20.10.2026)
    und „Persoenlichkeitsprofil/01 Wortstil-Probe“ (freigegeben 19.10.2026). */
 window.CRM_DATA = (function () {
