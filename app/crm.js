@@ -806,8 +806,12 @@
   }
   // Einladungsweg in 3 Schritten (Tanja 15.11.2026, A1): Schritt zum Status, darunter nur die passenden Arten
   const schrittOf = (status) => C.SCHRITTE.find((x) => x.status.includes(status)) || C.SCHRITTE[0];
-  function setDefaultVideo() {
-    const dv = DR && !DR.video && artOf(DR.art) && artOf(DR.art).defaultVideo;
+  // Video zur Art vorauswählen. Beim Wechsel der Art (artWechsel) folgt das Video der neuen Art, außer es wurde von Hand gewählt (Tanja 15.11.2026:
+  // bei „Erklärvideo schicken“ kam noch das Video vom Erstkontakt).
+  function setDefaultVideo(artWechsel) {
+    if (!DR) return;
+    if (artWechsel && !DR.videoHand) DR.video = null;
+    const dv = !DR.video && artOf(DR.art) && artOf(DR.art).defaultVideo;
     const v = dv && videoOf(dv);
     if (v && v.url) DR.video = { key: v.key, titel: v.titel, url: v.url };
   }
@@ -1184,15 +1188,16 @@
       case 'rec-save': return saveRec(el);
 
       // Entwurf
-      case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; setDefaultVideo(); if (DR.started) generate(k); else render(); return;
+      // Erst wählen, dann schreiben (Tanja 15.11.2026): ein Wechsel startet die KI nicht, der Knopf „Entwurf schreiben“ erscheint wieder
+      case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; DR.started = false; setDefaultVideo(true); render(); return;
       case 'alle-arts': if (DR.loading) return; DR.alle = !DR.alle; render(); return;
       // Antwort auf den Erstkontakt mit Video (Tanja 15.11.2026, A1/A2): direkt zur passenden nächsten Nachricht
       case 'antwort-test': DR = null; go(`#/entwurf/${k.id}?art=einladung_test`); return;
       // „Erzähl mir mehr“ = Erklärvideo Technologie (Tanja 15.11.2026, Einladungsvideo A2), nicht mehr die Business-Einladung
       case 'antwort-mehr': DR = null; go(`#/entwurf/${k.id}?art=erklaervideo`); return;
       case 'start': if (DR.loading) return; DR.started = true; DR.text = ''; generate(k); return;
-      case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
-      case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
+      case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; DR.started = false; render(); return;
+      case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; DR.started = false; render(); return;
       case 'ki-on': return once(async () => {
         const row = await db(sb.from('profil').update({ einwilligung_ki_am: new Date().toISOString() }).eq('id', T.state.session.user.id).select().single());
         if (!row) return;
@@ -1263,10 +1268,11 @@
         const old = DR.video && DR.video.url;
         const ownText = (key) => !!(key && C.VIDEO_DRAFTS[key] && C.VIDEO_DRAFTS[key][DR.art]);
         const oldKey = DR.video && DR.video.key;
-        DR.video = { key: v.key, titel: v.titel, url: v.url };
+        DR.video = { key: v.key, titel: v.titel, url: v.url }; DR.videoHand = true;
         if (!DR.started) { closeModal(); render(); return; } // wird beim Schreiben eingesetzt
         // Video mit eigenem Text (z. B. Signal-Score) gewechselt: Entwurf passend neu schreiben
-        if (oldKey !== v.key && (ownText(oldKey) || ownText(v.key)) && M && M.k) { const vk = M.k; closeModal(); generate(vk); return; }
+        // Video mit eigenem Text gewechselt: nicht selbst neu schreiben, sondern wieder „Entwurf schreiben“ anbieten (Tanja 15.11.2026)
+        if (oldKey !== v.key && (ownText(oldKey) || ownText(v.key))) { DR.started = false; DR.text = ''; closeModal(); render(); return; }
         if (old && old !== v.url) DR.text = DR.text.split(old).join(v.url);
         if (/\[Video-Link\]/.test(DR.text)) DR.text = fillVideo(DR.text);
         else if (!DR.text.includes(v.url)) DR.text = DR.text.trim() + ' ' + v.url;
