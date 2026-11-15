@@ -388,3 +388,12 @@ button.back { background: none; border: 0; padding: 0; font: inherit; font-weigh
 .imp-row input { width: 22px; height: 22px; accent-color: var(--terra); flex: 0 0 auto; }
 .imp-row > span { display: flex; flex-direction: column; min-width: 0; }
 .imp-row.off { opacity: .55; cursor: default; }
+
+/* Einladungsweg in 3 Schritten (15.11.2026) */
+.schritt-weg { display: flex; gap: 6px; margin: 4px 0 8px; flex-wrap: wrap; }
+.schritt { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--line); font-size: .85rem; color: var(--muted, #777); }
+.schritt .num { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .78rem; background: var(--line); color: var(--bark); }
+.schritt.on { border-color: var(--bark); color: var(--bark); font-weight: 600; }
+.schritt.on .num { background: var(--bark); color: var(--sand); }
+.schritt.done .num { background: var(--olive); color: #fff; }
+.art-chips-rest { margin-top: 0; opacity: .9; }

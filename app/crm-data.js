@@ -10,13 +10,14 @@ window.CRM_DATA = (function () {
     { key: 'test_gemacht',    icon: '📋', name: 'Test gemacht',        text: 'Mail von Superpatch: Test gemacht',     fu: 1,    art: 'gespraech_auswertung' },
     { key: 'probiert',        icon: '🧪', name: 'Probiert',            text: 'hat einen Testpatch',                   fu: 7,    art: 'nachfassen' },
     { key: 'kunde',           icon: '🛒', name: 'Kunde',               text: 'hat bestellt',                          fu: 14,   art: 'danke_pflege' },
-    { key: 'partner',         icon: '🤝', name: 'Partner',             text: 'ist selbst als Kundenpromoter dabei',   fu: null, art: 'nachfassen' },
+    { key: 'partner',         icon: '🤝', name: 'Partner',             text: 'ist selbst als Affiliate dabei',        fu: null, art: 'nachfassen' },
     { key: 'gerade_nicht',    icon: '⏸', name: 'Gerade nicht',        text: 'im Moment kein Interesse, ohne Wertung', fu: 90,  art: 'nachfassen' },
   ];
 
   // Entwurfsarten. next = Status, den die App nach dem Kopieren vorschlägt (null = Status bleibt).
   const ARTS = [
-    { key: 'erstkontakt',            name: 'Erstkontakt',               short: 'Erstkontakt',   next: 'angesprochen' },
+    // Erstkontakt mit Video (Tanja 15.11.2026, Webinar Küffner): sagt, worum es geht, Video vorausgewählt.
+    { key: 'erstkontakt',            name: 'Erstkontakt',               short: 'Erstkontakt',   next: 'angesprochen', video: true, defaultVideo: 'vision6' },
     { key: 'einladung_test',         name: 'Einladung zum Test',        short: 'Einladung Test', next: 'test_eingeladen' },
     { key: 'gespraech_auswertung',   name: 'Gespräch zur Auswertung',   short: 'Auswertung',    next: null },
     { key: 'einladung_ausprobieren', name: 'Zum Ausprobieren einladen', short: 'Ausprobieren',  next: null },
@@ -27,6 +28,14 @@ window.CRM_DATA = (function () {
     // Um einen Gefallen bitten (Tanja 09.11.2026): Video anschauen + ehrliches Feedback. Nach 3 Tagen Danke + Empfehlungsfrage (zwei getrennte Schritte).
     { key: 'feedback_bitte',         name: 'Um Feedback bitten',        short: 'Feedback-Bitte', next: 'angesprochen', video: true, fu: { tage: 3, art: 'feedback_danke' } },
     { key: 'feedback_danke',         name: 'Danke fürs Feedback & Empfehlung', short: 'Feedback-Danke', next: null },
+  ];
+
+  // Einladungsweg in 3 Schritten (Tanja 15.11.2026, Webinar Küffner „Duplikation“, A1).
+  // Die Seite „Nachricht an …“ zeigt den Schritt zum Status und nur diese Arten; alle Arten bleiben unter „alle Nachrichten zeigen“.
+  const SCHRITTE = [
+    { nr: 1, name: 'Neugierig machen', status: ['neu', 'angesprochen', 'gerade_nicht'],       arts: ['erstkontakt', 'feedback_bitte', 'nachfassen'] },
+    { nr: 2, name: 'Ausprobieren',     status: ['test_eingeladen', 'test_gemacht', 'probiert'], arts: ['einladung_test', 'gespraech_auswertung', 'einladung_ausprobieren', 'nachfassen'] },
+    { nr: 3, name: 'Weitergeben',      status: ['kunde', 'partner'],                            arts: ['danke_pflege', 'feedback_danke', 'business_einladung', 'nachfassen'] },
   ];
 
   // Videos zum Weiterleiten (Tanja 09.11.2026: mehrere zur Auswahl, nicht jedes passt für jeden).
@@ -81,18 +90,19 @@ window.CRM_DATA = (function () {
   // Feste Regeln: keine Krankheiten/Beschwerden, keine Preise, keine Patch-Anzahl, keine 7er-Probierpakete, kein Druck.
   // Stand 09.11.2026: Gesprächsbausteine mit rotem Faden aus den Visions-Videos (E2–E4, E6, N1, K3, N5, N7, V3, B1–B6, R1–R10).
   const DRAFTS = {
+    // Neu 15.11.2026 (Tanja, A1): sagt, worum es geht, mit Video. Superpatch-Name und Test-Link erst später.
     erstkontakt: {
-      pfeil:     'Hey {name} 😊 ich beschäftige mich gerade mit etwas Neuem und bin selbst gespannt. Hast du Lust, in ein paar Minuten zu entdecken, wo du gerade stehst?',
-      funke:     'Hey {name}! 😄 Lange nichts gehört. Ich bin gerade bei etwas Neuem dabei und finde es richtig spannend. Ich schätze an dir, dass du offen für Neues bist: Magst du mal einen kurzen Test dazu machen?',
-      anker:     'Hey {name} 😊 wie geht’s dir? Ist schon eine Weile her. Ich beschäftige mich gerade mit etwas Neuem. Ganz in Ruhe, nur falls es dich interessiert: Magst du dir mal anschauen, wo du gerade stehst?',
-      kristall:  'Hallo {name} 😊 ich beschäftige mich gerade mit etwas Neuem. Du musst mir nichts glauben: Es gibt einen kurzen, anonymen Test, dann kannst du dir selbst ein Bild machen. Hättest du Lust?',
-      neutral:   'Hey {name} 😊 ich beschäftige mich gerade mit etwas Neuem. Hättest du Lust, in Ruhe zu entdecken, wo du gerade stehst? Dazu gibt es einen kurzen, anonymen Test.',
+      pfeil:     'Hey {name} 😊 kurz und knapp: Ich hab kleine Patches für die Haut entdeckt und bin begeistert. Worum es geht, siehst du in 1,5 Minuten: [Video-Link] Wie findest du es?',
+      funke:     'Hey {name}! 😄 Lange nichts gehört! Ich hab etwas entdeckt, das mich richtig begeistert: kleine Patches, die man auf die Haut klebt. Schau mal rein, das Video dauert 1,5 Minuten: [Video-Link] Ich bin so gespannt, was du sagst!',
+      anker:     'Hey {name} 😊 wie geht’s dir? Ist schon eine Weile her. Ich beschäftige mich gerade mit kleinen Patches, die man auf die Haut klebt, und das macht mir richtig Freude. Wenn du magst, schau dir in Ruhe dieses kurze Video an (1,5 Min.): [Video-Link] Ich freu mich, von dir zu hören.',
+      kristall:  'Hallo {name} 😊 ich beschäftige mich gerade mit kleinen Patches für die Haut und mit der Technologie dahinter. Worum es geht, zeigt dieses Video (1,5 Min.): [Video-Link] Mich interessiert deine ehrliche Einschätzung. Die Hintergründe erkläre ich dir gern. LG',
+      neutral:   'Hey {name} 😊 ich hab etwas entdeckt, das mich gerade richtig begeistert: kleine Patches, die man auf die Haut klebt. In einem kurzen Video (1,5 Min.) siehst du, worum es geht: [Video-Link] Sag mir einfach ehrlich deine Meinung 😊',
     },
     // {link} = direkter Link zum Signalscore-Test der Person (signal.superpatch.com/de-DE/survey?rsu=…), erzeugt aus ihrem Superpatch-Link (Tanja 09.11.2026)
     einladung_test: {
       pfeil:    'Hey {name}, ich schick dir gern den Link zum Test, dauert ca. 5 Minuten und ist anonym: {link}\nTrag am Ende deine E-Mail ein, dann bekommst du dein Ergebnis und ich eine kurze Info 😊',
       funke:    'Hey {name} 😄 wie versprochen, hier ist der Test: {link}\nIch bin gespannt, was bei dir herauskommt! Trag am Ende deine E-Mail ein, dann kommt dein Ergebnis per Mail.',
-      anker:    'Hey {name} 😊 danke, dass du offen dafür bist. Ich schick dir gern den Link: ein paar kurze Fragen, ganz in Ruhe, wann es dir passt (ca. 5 Minuten, anonym). Danach siehst du, welche Signale dir dein Körper gibt: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis, ich sehe, dass du fertig bist, und wir können zusammen draufschauen.',
+      anker:    'Hey {name} 😊 danke, dass du offen dafür bist. Ich schick dir gern den Link: ein paar kurze Fragen, ganz in Ruhe, wann es dir passt (ca. 5 Minuten, anonym). Danach siehst du, welche Patches zu dir passen könnten: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis, ich sehe, dass du fertig bist, und wir können zusammen draufschauen.',
       kristall: 'Hallo {name}, hier ist der Link zum Test (ca. 5 Minuten, anonym): {link}\nAm Ende siehst du deinen Signalscore und welche Art von Patches Superpatch dir empfiehlt. Wenn du deine E-Mail einträgst, bekommst du die Auswertung zugeschickt und ich eine kurze Info. Dann erkläre ich dir gern die Hintergründe. LG',
       neutral:  'Hey {name} 😊 ich schick dir gern den Link zum Test, dauert ca. 5 Minuten und ist anonym. So siehst du, wo du gerade stehst: {link}\nTrag am Ende gern deine E-Mail ein, dann bekommst du dein Ergebnis und ich weiß Bescheid. LG',
     },
@@ -104,16 +114,16 @@ window.CRM_DATA = (function () {
       neutral:  'Hey {name}, danke, dass du den Test gemacht hast! Was hat dich an deinem Ergebnis am meisten überrascht? Magst du kurz mit mir drüber sprechen, eher unter der Woche oder am Wochenende?',
     },
     einladung_ausprobieren: {
-      pfeil:    'Hey {name}, ich hab gesehen, dass du den Test gemacht hast 😊 Wollen wir kurz über dein Ergebnis sprechen? Du musst mir nichts glauben, probier es einfach selbst aus. Ich kann dir einen Testpatch geben.',
+      pfeil:    'Hey {name}, ich hab gesehen, dass du den Test gemacht hast 😊 Wollen wir kurz über dein Ergebnis sprechen? Am besten probierst du es selbst aus. Ich kann dir einen Testpatch geben.',
       funke:    'Hey {name} 😄 du hast den Test gemacht, wie cool! Was sagst du zu deinem Ergebnis? Lass uns kurz drüber quatschen, und wenn du Lust hast, bring ich dir einen Testpatch mit. Probier es selbst aus und sag mir, wie du es findest!',
       anker:    'Hey {name} 😊 danke dir, dass du den Test gemacht hast. Wenn du magst, schauen wir uns dein Ergebnis in Ruhe zusammen an. Und falls es sich für dich gut anfühlt, kannst du es ganz unverbindlich selbst ausprobieren, in deinem Tempo. Ich geb dir gern einen Testpatch.',
       kristall: 'Hallo {name}, danke, dass du den Test gemacht hast. Wenn du magst, gehen wir dein Ergebnis und die Empfehlung zusammen durch, ich erkläre dir gern die Hintergründe. Wenn du es danach selbst prüfen möchtest: Ich geb dir gern einen Testpatch, oder du schaust in meinem Shop: {link}\nLass dir Zeit. LG',
-      neutral:  'Hey {name} 😊 ich hab gesehen, dass du den Test gemacht hast, danke dir! Magst du kurz über dein Ergebnis sprechen? Du musst mir nichts glauben, probier es einfach selbst aus: Ich geb dir gern einen Testpatch, oder du schaust dich in meinem Shop um: {link}',
+      neutral:  'Hey {name} 😊 ich hab gesehen, dass du den Test gemacht hast, danke dir! Magst du kurz über dein Ergebnis sprechen? Am besten probierst du es selbst aus: Ich geb dir gern einen Testpatch, oder du schaust dich in meinem Shop um: {link}',
     },
     nachfassen: {
       pfeil:    'Hey {name}, kurze Frage: Bist du schon dazu gekommen, reinzuschauen? Welche Frage ist bei dir noch offen? 😊',
       funke:    'Heyy {name} 😄 wie geht’s dir? Bist du schon dazu gekommen, reinzuschauen? Mich würde interessieren, was dir hängen geblieben ist!',
-      anker:    'Hey {name} 😊 wie geht’s dir? Ich wollte mich einfach mal melden, ganz ohne Eile. Sag einfach, wenn du Fragen hast. Drück dich',
+      anker:    'Hey {name} 😊 wie geht’s dir? Ich wollte mich einfach mal melden, ganz in Ruhe. Sag einfach, wenn du Fragen hast. Drück dich',
       kristall: 'Hallo {name}, konntest du dir schon ein Bild machen? Wenn Fragen offen sind, beantworte ich sie gern. Und falls du den kurzen Test noch machen magst, schick ich dir gern den Link. LG',
       neutral:  'Hey {name} 😊 wie geht’s dir? Bist du schon dazu gekommen, reinzuschauen? Welche Frage ist bei dir noch offen? LG',
     },
@@ -126,26 +136,26 @@ window.CRM_DATA = (function () {
     },
     // Kompliment → Grund → worum es geht → Entscheidung beim Kontakt, am Ende ein Video ohne Druck (Bausteine B1–B6, Visions-Video Fassung 4)
     business_einladung: {
-      pfeil:    'Hey {name} 😊 du packst Dinge an, statt lange zu reden. Ich denk an dich, weil [Grund]. Ich bau mir gerade nebenbei etwas Eigenes auf, rund um mein Leben und ohne bei null anzufangen. Hier ein kurzes Video dazu, knapp zwei Minuten: [Video-Link] Ob es was für dich ist, entscheidest nur du.',
+      pfeil:    'Hey {name} 😊 du packst Dinge an, statt lange zu reden. Ich denk an dich, weil [Grund]. Ich bau mir gerade nebenbei etwas Eigenes auf, rund um mein Leben und auf einem Fundament, das schon steht. Hier ein kurzes Video dazu, 1,5 Minuten: [Video-Link] Ob es was für dich ist, entscheidest nur du.',
       funke:    'Hey {name} 😄 du bringst Menschen zusammen wie kaum jemand, und ich hab an dich gedacht, weil [Grund]. Ich bau mir gerade mit tollen Menschen etwas Eigenes auf, rund um mein Leben. Ich teile das gern mit dir: Magst du dir ein kurzes Video dazu anschauen? [Video-Link] Ich bin gespannt, was du sagst, und ein Nein ist auch völlig okay!',
-      anker:    'Hey {name} 😊 ich schätze sehr, wie viel Erfahrung du mitbringst und wie gut du mit Menschen kannst. Ich denk an dich, weil [Grund]. Ich hab für mich etwas Eigenes angefangen, das ich mir so einteilen kann, wie es zu meinem Leben passt. Wenn du magst, schau dir in Ruhe dieses kurze Video an: [Video-Link] Ganz ohne Eile, du entscheidest.',
+      anker:    'Hey {name} 😊 ich schätze sehr, wie viel Erfahrung du mitbringst und wie gut du mit Menschen kannst. Ich denk an dich, weil [Grund]. Ich hab für mich etwas Eigenes angefangen, das ich mir so einteilen kann, wie es zu meinem Leben passt. Wenn du magst, schau dir in Ruhe dieses kurze Video an: [Video-Link] Ganz in deinem Tempo, du entscheidest.',
       kristall: 'Hallo {name}, du schaust dir Dinge genau an, das schätze ich an dir. Ich denk an dich, weil [Grund]. Ich bau mir gerade nebenberuflich etwas Eigenes auf, auf einem Fundament, das schon steht, und erklär dir gern in Ruhe, wie das funktioniert. Als Einstieg ein kurzes Video: [Video-Link] Lass dir Zeit und sag mir einfach, ob du mehr wissen möchtest. LG',
       neutral:  'Hey {name} 😊 als ich überlegt hab, mit wem ich das teilen möchte, hab ich an dich gedacht, weil [Grund]. Ich bau mir gerade nebenbei etwas Eigenes auf, rund um mein Leben und nicht umgekehrt. Magst du dir ein kurzes Video dazu anschauen? [Video-Link] Ganz unverbindlich, du entscheidest. LG',
     },
     // Um einen Gefallen bitten: ehrlicher Anlass, kurzes Video, ehrliches Feedback, ohne Test-Link (Tanja 09.11.2026)
     feedback_bitte: {
-      pfeil:    'Hey {name} 😊 kurze Bitte an dich: Ich hab hier ein Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Danke dir!',
+      pfeil:    'Hey {name} 😊 kurze Bitte an dich: Ich hab hier ein Video, 1,5 Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Danke dir!',
       funke:    'Hey {name} 😄 wir hören uns ja eher selten, umso mehr freu ich mich, dich um etwas zu bitten: Schau dir doch mal dieses kurze Video an: [Video-Link] Ich bin gespannt auf deine ehrliche Meinung, findest du es gut und spannend?',
-      anker:    'Hey {name} 😊 wie geht’s dir? Wir hören uns ja eher selten, darum freu ich mich, dass ich dich um einen kleinen Gefallen bitten darf. Ich hab ein kurzes Video: [Video-Link] Magst du es dir in Ruhe anschauen und mir ehrlich sagen, wie es auf dich wirkt? Ganz ohne Eile.',
-      kristall: 'Hallo {name}, ich hätte eine Bitte an dich: Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Mir ist deine ehrliche Einschätzung wichtig: Ist es verständlich, gut gemacht und spannend? Danke dir! LG',
-      neutral:  'Hey {name} 😊 wir hören uns ja eher selten, umso mehr freu ich mich, dass ich dich um etwas bitten darf. Ich hab ein kurzes Video, knapp zwei Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Danke dir!',
+      anker:    'Hey {name} 😊 wie geht’s dir? Wir hören uns ja eher selten, darum freu ich mich, dass ich dich um einen kleinen Gefallen bitten darf. Ich hab ein kurzes Video: [Video-Link] Magst du es dir in Ruhe anschauen und mir ehrlich sagen, wie es auf dich wirkt? Ganz in deinem Tempo.',
+      kristall: 'Hallo {name}, ich hätte eine Bitte an dich: Ich hab ein kurzes Video, 1,5 Minuten: [Video-Link] Mir ist deine ehrliche Einschätzung wichtig: Ist es verständlich, gut gemacht und spannend? Danke dir! LG',
+      neutral:  'Hey {name} 😊 wir hören uns ja eher selten, umso mehr freu ich mich, dass ich dich um etwas bitten darf. Ich hab ein kurzes Video, 1,5 Minuten: [Video-Link] Magst du es dir anschauen und mir ehrlich sagen, ob du es gut und spannend findest? Danke dir!',
     },    // Zweiter Schritt: nach dem Feedback fragen, danken, dann erst um Menschen im Umfeld bitten (Situation statt Kategorie, Entlastung)
     feedback_danke: {
-      pfeil:    'Hey {name} 😊 hast du kurz ins Video geschaut? Was ist dir hängen geblieben? Und noch eine Frage: Kennst du jemanden, der offen für etwas Neues ist und das spannend finden könnte? Gib den Link einfach weiter, du musst niemanden überreden.',
+      pfeil:    'Hey {name} 😊 hast du kurz ins Video geschaut? Was ist dir hängen geblieben? Und noch eine Frage: Kennst du jemanden, der offen für etwas Neues ist und das spannend finden könnte? Gib den Link einfach weiter, das reicht völlig.',
       funke:    'Hey {name} 😄 danke dir schon mal fürs Reinschauen! Was hat dir am besten gefallen? Und sag mal: Fällt dir jemand ein, der gerade offen für etwas Neues ist und das spannend finden könnte? Dann leite ihm das Video einfach weiter, er meldet sich, wenn er mag.',
-      anker:    'Hey {name} 😊 wie geht’s dir? Danke, dass du dir Zeit genommen hast. Was hat dir am besten gefallen? Und falls dir jemand einfällt, der gern wissen möchte, wo er gerade steht: Gib das Video einfach weiter, ganz ohne Druck. Die Person meldet sich, wenn sie mag.',
+      anker:    'Hey {name} 😊 wie geht’s dir? Danke, dass du dir Zeit genommen hast. Was hat dir am besten gefallen? Und falls dir jemand einfällt, der gern wissen möchte, wo er gerade steht: Gib das Video einfach weiter, ganz in deinem Tempo. Die Person meldet sich, wenn sie mag.',
       kristall: 'Hallo {name}, danke, dass du dir das Video angesehen hast. Wie war deine ehrliche Einschätzung? Und eine Frage noch: Kennst du jemanden, der offen für neue Wege ist und sich das gern anschauen würde? Du kannst den Link einfach weitergeben, mehr braucht es nicht. LG',
-      neutral:  'Hey {name} 😊 danke dir, dass du ins Video geschaut hast! Was hat dir am besten gefallen? Und falls dir jemand einfällt, der offen für etwas Neues ist und das spannend finden könnte: Gib das Video einfach weiter. Du musst niemanden überreden, die Person meldet sich, wenn sie mag.',
+      neutral:  'Hey {name} 😊 danke dir, dass du ins Video geschaut hast! Was hat dir am besten gefallen? Und falls dir jemand einfällt, der offen für etwas Neues ist und das spannend finden könnte: Gib das Video einfach weiter. Das reicht völlig, die Person meldet sich, wenn sie mag.',
     },
   };
   // Begleittext zu Videos mit test: true. {link} = direkter Link zum Signalscore-Test der Person.
@@ -158,7 +168,7 @@ window.CRM_DATA = (function () {
     },
   };
   // Indirekte Ansprache (Tanja 09.11.2026), nur beim Nachfassen, nie in der ersten Nachricht: wenn es für den Kontakt selbst nicht passt, nach Menschen im Umfeld fragen. Situation statt Kategorie, kein Druck.
-  const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Du musst niemanden überreden. Sag mir einfach Bescheid, dann schick ich dir den Link zum Weitergeben.';
+  const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Weitergeben reicht völlig. Sag mir einfach Bescheid, dann schick ich dir den Link dafür.';
   // Nur wenn beim Kontakt „Offen für das Business-Thema“ an ist UND im Entwurf ausdrücklich gewählt.
   const BUSINESS_LINE = 'Übrigens: Falls du Lust hast, das selbst weiterzuempfehlen, erzähl ich dir gern, wie ich das mache. Ganz unverbindlich.';
 
@@ -169,6 +179,6 @@ window.CRM_DATA = (function () {
     ['lieblingswoerter', 'Lieblingswörter'], ['nie', 'Würde nie sagen'], ['sprache', 'Sprachnachricht vs. Text'],
   ];
 
-  return { STECKBRIEF_FIELDS, STATUS, ARTS, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE,
+  return { STECKBRIEF_FIELDS, STATUS, ARTS, SCHRITTE, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE,
     HANDBUCH: 'https://heyzine.com/flip-book/e2bfcd5caf.html' };
 })();

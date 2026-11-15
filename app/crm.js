@@ -333,6 +333,10 @@
         : `<div class="muted">Kein Follow-up eingetragen.</div><div class="actions"><button class="btn secondary small" data-act="fu-edit">＋ Follow-up eintragen</button></div>`}
       </section>
 
+      ${['angesprochen', 'gerade_nicht'].includes(k.status) ? `<section class="card sand antwort-box">
+        <p style="margin:0 0 6px"><b>Hat ${esc(firstName(k.name))} geantwortet?</b></p>
+        <div class="actions" style="margin-top:0"><button class="btn secondary small" data-act="antwort-test">„Test“ → Link schicken</button><button class="btn secondary small" data-act="antwort-mehr">„Erzähl mir mehr“ → Business-Einladung</button></div>
+      </section>` : ''}
       <div class="btn-grid" style="margin-bottom:16px">
         <a class="btn wide" href="#/entwurf/${esc(k.id)}">✉ Nachricht vorschlagen</a>
         <a class="btn secondary" href="#/sprachnotiz?k=${esc(k.id)}">🎙 Gespräch notieren</a>
@@ -799,12 +803,34 @@
     }
     if (T.route().name === 'entwurf') render();
   }
+  // Einladungsweg in 3 Schritten (Tanja 15.11.2026, A1): Schritt zum Status, darunter nur die passenden Arten
+  const schrittOf = (status) => C.SCHRITTE.find((x) => x.status.includes(status)) || C.SCHRITTE[0];
+  function setDefaultVideo() {
+    const dv = DR && !DR.video && artOf(DR.art) && artOf(DR.art).defaultVideo;
+    const v = dv && videoOf(dv);
+    if (v && v.url) DR.video = { key: v.key, titel: v.titel, url: v.url };
+  }
+  function schrittHtml(k, off) {
+    const cur = schrittOf(k.status);
+    const visible = (a) => !a.business || k.business_offen || DR.art === a.key;
+    const keys = cur.arts.slice();
+    if (!keys.includes(DR.art)) keys.push(DR.art); // über „alle Nachrichten“ gewählt
+    const chip = (a) => `<button class="chip ${DR.art === a.key ? 'on' : ''}" data-act="art" data-art="${a.key}" role="tab" aria-selected="${DR.art === a.key}" ${off}>${a.short}</button>`;
+    const main = keys.map(artOf).filter((a) => a && visible(a));
+    const rest = C.ARTS.filter((a) => visible(a) && !keys.includes(a.key));
+    return `<div class="schritt-weg" aria-label="Einladungsweg">${C.SCHRITTE.map((x) => `<span class="schritt ${x.nr === cur.nr ? 'on' : x.nr < cur.nr ? 'done' : ''}"><span class="num">${x.nr}</span>${esc(x.name)}</span>`).join('')}</div>
+      <p class="small muted" style="margin:0 0 4px">Dein nächster Schritt mit ${esc(firstName(k.name))}: <b>${esc(cur.name)}</b></p>
+      <div class="art-chips" role="tablist">${main.map(chip).join('')}</div>
+      ${rest.length ? (DR.alle ? `<div class="art-chips art-chips-rest" role="tablist">${rest.map(chip).join('')}</div><button class="linklike small" data-act="alle-arts" ${off}>▴ weniger zeigen</button>`
+        : `<button class="linklike small" data-act="alle-arts" ${off}>▸ alle Nachrichten zeigen</button>`) : ''}`;
+  }
   function viewEntwurf(r) {
     const k = kontakt(r.id);
     if (!k) return '<p>Diesen Kontakt gibt es nicht mehr.</p>';
     if (!DR || DR._for !== k.id) {
-      DR = { _for: k.id, art: r.params.art || statusOf(k.status).art, business: false, text: '', source: '', loading: false, error: '', cache: {}, token: 0, started: false };
+      DR = { _for: k.id, art: r.params.art || statusOf(k.status).art, business: false, text: '', source: '', loading: false, error: '', cache: {}, token: 0, started: false, alle: false };
     }
+    setDefaultVideo();
     const p = profil();
     const t = k.typ_geschaetzt && C.TYPES[k.typ_geschaetzt];
     const hasSb = !!T.state.steckbrief;
@@ -822,7 +848,7 @@
       <a class="back" href="#/kontakt/${esc(k.id)}">← ${esc(k.name)}</a>
       <h1>Nachricht an ${esc(firstName(k.name))}</h1>
       ${DR.started ? '' : '<p style="margin-bottom:6px"><b>Welche Nachricht möchtest du schreiben?</b> <span class="small muted">Vorausgewählt ist der Vorschlag zum Status.</span></p>'}
-      <div class="art-chips" role="tablist">${C.ARTS.filter((a) => !a.business || k.business_offen || DR.art === a.key).map((a) => `<button class="chip ${DR.art === a.key ? 'on' : ''}" data-act="art" data-art="${a.key}" role="tab" aria-selected="${DR.art === a.key}" ${off}>${a.short}</button>`).join('')}</div>
+      ${schrittHtml(k, off)}
       <p class="type-line">${t ? `Typ: ${t.icon} ${t.name} (geschätzt) bestimmt den Aufbau` : 'Typ: weiß ich noch nicht, darum ein neutraler Aufbau'} · Stimme: ${hasSb && aiReady() ? 'deine' : 'neutral'}</p>
       ${hasSb ? '' : '<p class="notice warm">Mach zuerst die <a href="#/kompass">Wortstil-Probe</a> (ca. 10 Min.), dann klingen die Entwürfe nach dir.</p>'}
       ${needsLink ? '<p class="notice warm">Trag im <a href="#/profil">Profil</a> „Mein Superpatch-Link“ ein, dann steht er direkt im Entwurf.</p>' : ''}
@@ -1157,7 +1183,15 @@
       case 'rec-save': return saveRec(el);
 
       // Entwurf
-      case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; if (DR.started) generate(k); else render(); return;
+      case 'art': if (DR.loading) return; DR.art = el.dataset.art; DR.text = ''; setDefaultVideo(); if (DR.started) generate(k); else render(); return;
+      case 'alle-arts': if (DR.loading) return; DR.alle = !DR.alle; render(); return;
+      // Antwort auf den Erstkontakt mit Video (Tanja 15.11.2026, A1/A2): direkt zur passenden nächsten Nachricht
+      case 'antwort-test': DR = null; go(`#/entwurf/${k.id}?art=einladung_test`); return;
+      case 'antwort-mehr': return once(async () => {
+        const nk = k.business_offen ? k : await updateK(k, { business_offen: true });
+        if (!nk) return;
+        DR = null; go(`#/entwurf/${nk.id}?art=business_einladung`);
+      });
       case 'start': if (DR.loading) return; DR.started = true; DR.text = ''; generate(k); return;
       case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
       case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
