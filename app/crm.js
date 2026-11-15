@@ -124,6 +124,7 @@
       case 'gespraech_auswertung': return `${n}: Gespräch zur Auswertung vereinbaren`;
       case 'einladung_ausprobieren': return `${n} zum Ausprobieren einladen`;
       case 'danke_pflege': return `${n}: Danke & Kundenpflege`;
+      case 'erklaervideo': return `${n} das Erklärvideo schicken`;
       case 'feedback_bitte': return `${n} um Feedback zum Video bitten`;
       case 'feedback_danke': return `${n}: nach dem Feedback fragen, Danke & Empfehlung`;
       case 'sonstiges': return `${n}: ${k.follow_up_notiz || 'melden'}`;
@@ -335,7 +336,7 @@
 
       ${['angesprochen', 'gerade_nicht'].includes(k.status) ? `<section class="card sand antwort-box">
         <p style="margin:0 0 6px"><b>Hat ${esc(firstName(k.name))} geantwortet?</b></p>
-        <div class="actions" style="margin-top:0"><button class="btn secondary small" data-act="antwort-test">„Test“ → Link schicken</button><button class="btn secondary small" data-act="antwort-mehr">„Erzähl mir mehr“ → Business-Einladung</button></div>
+        <div class="actions" style="margin-top:0"><button class="btn secondary small" data-act="antwort-test">„Test“ → Link schicken</button><button class="btn secondary small" data-act="antwort-mehr">„Erzähl mir mehr“ → Erklärvideo</button></div>
       </section>` : ''}
       <div class="btn-grid" style="margin-bottom:16px">
         <a class="btn wide" href="#/entwurf/${esc(k.id)}">✉ Nachricht vorschlagen</a>
@@ -856,7 +857,7 @@
         <p style="margin-top:0"><b>Entwürfe von der KI in deinem Ton?</b></p>
         <p class="small">Dafür gehen dein Steckbrief, deine Musternachrichten, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zu diesem Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts. Du kannst das im Profil jederzeit wieder ausschalten.</p>
         <div class="actions" style="margin-top:6px"><button class="btn small" data-act="ki-on" ${off}>KI-Entwürfe einschalten</button></div></div>`}
-      ${noEmpf ? '' : `<label class="check"><input type="checkbox" data-act="empfehlung" ${DR.empfehlung ? 'checked' : ''} ${off}><span>Zusätzlich um Kontakte aus seinem Umfeld bitten <span class="muted small">(wenn es für ${esc(firstName(k.name))} selbst nicht passt, kennt er vielleicht jemanden)</span></span></label>`}
+      ${noEmpf ? '' : `<label class="check"><input type="checkbox" data-act="empfehlung" ${DR.empfehlung ? 'checked' : ''} ${off}><span>Zusätzlich nach Menschen im Umfeld von ${esc(firstName(k.name))} fragen <span class="muted small">(vielleicht fällt ${esc(firstName(k.name))} jemand ein, für den es gerade passt)</span></span></label>`}
       ${k.business_offen && !isBiz ? `<label class="check"><input type="checkbox" data-act="business" ${DR.business ? 'checked' : ''} ${off}><span>Business-Thema erwähnen <span class="muted small">(nur weil du es beim Kontakt freigeschaltet hast)</span></span></label>` : ''}
       ${withVideo ? `<div class="card sand video-pick">
         <div class="card-head"><div>🎬 <b>Video:</b> ${DR.video ? esc(DR.video.titel) : '<span class="muted">noch keins gewählt</span>'}</div>
@@ -951,7 +952,7 @@
       <label class="check"><input type="checkbox" id="m-fuon" ${M.fuOn ? 'checked' : ''}><span>Follow-up eintragen ${statusOf(M.sel).fu ? `<span class="muted small">(Vorschlag: in ${fuLabel(statusOf(M.sel).fu)})</span>` : ''}</span></label>
       <div class="row2" ${M.fuOn ? '' : 'hidden'} id="m-furow">
         <div><label class="field" for="m-fudate">Datum</label><input type="date" id="m-fudate" value="${M.fuDate}" min="${today()}"></div>
-        <div><label class="field" for="m-fuart">Art</label><select id="m-fuart">${C.ARTS.map((a) => `<option value="${a.key}" ${M.fuArt === a.key ? 'selected' : ''}>${a.name}</option>`).join('')}<option value="sonstiges" ${M.fuArt === 'sonstiges' ? 'selected' : ''}>Sonstiges</option></select></div>
+        <div><label class="field" for="m-fuart">Art</label><select id="m-fuart">${C.ARTS.filter((a) => !a.ohneFu).map((a) => `<option value="${a.key}" ${M.fuArt === a.key ? 'selected' : ''}>${a.name}</option>`).join('')}<option value="sonstiges" ${M.fuArt === 'sonstiges' ? 'selected' : ''}>Sonstiges</option></select></div>
       </div>
       <div class="actions split"><button class="btn ghost" data-act="modal-close">Abbrechen</button><button class="btn" data-act="status-save">Übernehmen</button></div>`,
     (root) => {
@@ -973,7 +974,7 @@
       <div class="chips">${[1, 3, 7, 14].map((d) => `<button class="chip" data-act="fu-quick" data-d="${d}">in ${fuLabel(d)}</button>`).join('')}</div>
       <div class="row2">
         <div><label class="field" for="m-fudate">Datum</label><input type="date" id="m-fudate" value="${base}" min="${today()}"></div>
-        <div><label class="field" for="m-fuart">Art</label><select id="m-fuart">${C.ARTS.map((a) => `<option value="${a.key}" ${(afterDone ? st.art : k.follow_up_art || st.art) === a.key ? 'selected' : ''}>${a.name}</option>`).join('')}<option value="sonstiges">Sonstiges</option></select></div>
+        <div><label class="field" for="m-fuart">Art</label><select id="m-fuart">${C.ARTS.filter((a) => !a.ohneFu).map((a) => `<option value="${a.key}" ${(afterDone ? st.art : k.follow_up_art || st.art) === a.key ? 'selected' : ''}>${a.name}</option>`).join('')}<option value="sonstiges">Sonstiges</option></select></div>
       </div>
       <label class="field" for="m-funote">Notiz <span class="opt">(optional)</span></label>
       <input type="text" id="m-funote" maxlength="200" value="${afterDone ? '' : esc(k.follow_up_notiz)}" placeholder="z. B. nach dem Urlaub fragen">
@@ -1187,11 +1188,8 @@
       case 'alle-arts': if (DR.loading) return; DR.alle = !DR.alle; render(); return;
       // Antwort auf den Erstkontakt mit Video (Tanja 15.11.2026, A1/A2): direkt zur passenden nächsten Nachricht
       case 'antwort-test': DR = null; go(`#/entwurf/${k.id}?art=einladung_test`); return;
-      case 'antwort-mehr': return once(async () => {
-        const nk = k.business_offen ? k : await updateK(k, { business_offen: true });
-        if (!nk) return;
-        DR = null; go(`#/entwurf/${nk.id}?art=business_einladung`);
-      });
+      // „Erzähl mir mehr“ = Erklärvideo Technologie (Tanja 15.11.2026, Einladungsvideo A2), nicht mehr die Business-Einladung
+      case 'antwort-mehr': DR = null; go(`#/entwurf/${k.id}?art=erklaervideo`); return;
       case 'start': if (DR.loading) return; DR.started = true; DR.text = ''; generate(k); return;
       case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;
       case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; if (DR.started) generate(k); else render(); return;

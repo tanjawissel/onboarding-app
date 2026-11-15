@@ -18,7 +18,10 @@ window.CRM_DATA = (function () {
   // Entwurfsarten. next = Status, den die App nach dem Kopieren vorschlägt (null = Status bleibt).
   const ARTS = [
     // Erstkontakt mit Video (Tanja 15.11.2026, Webinar Küffner): sagt, worum es geht, Video vorausgewählt.
-    { key: 'erstkontakt',            name: 'Erstkontakt',               short: 'Erstkontakt',   next: 'angesprochen', video: true, defaultVideo: 'vision6' },
+    // Video seit 15.11.2026: Einladungsvideo „Dein Körper hört zu“ (A2, Tanja: „Beides erledigen“); vorher Signal-Score (vision6).
+    { key: 'erstkontakt',            name: 'Erstkontakt',               short: 'Erstkontakt',   next: 'angesprochen', video: true, defaultVideo: 'koerper' },
+    // Antwort „Erzähl mir mehr“ auf das Einladungsvideo (Tanja 15.11.2026, A2): Erklärvideo Technologie schicken, kein Business-Thema. ohneFu = nicht als Follow-up-Art wählbar.
+    { key: 'erklaervideo',           name: 'Erklärvideo schicken',      short: 'Erklärvideo',   next: null, video: true, defaultVideo: 'technologie', ohneFu: true },
     { key: 'einladung_test',         name: 'Einladung zum Test',        short: 'Einladung Test', next: 'test_eingeladen' },
     { key: 'gespraech_auswertung',   name: 'Gespräch zur Auswertung',   short: 'Auswertung',    next: null },
     { key: 'einladung_ausprobieren', name: 'Zum Ausprobieren einladen', short: 'Ausprobieren',  next: null },
@@ -34,7 +37,7 @@ window.CRM_DATA = (function () {
   // Einladungsweg in 3 Schritten (Tanja 15.11.2026, Webinar Küffner „Duplikation“, A1).
   // Die Seite „Nachricht an …“ zeigt den Schritt zum Status und nur diese Arten; alle Arten bleiben unter „alle Nachrichten zeigen“.
   const SCHRITTE = [
-    { nr: 1, name: 'Neugierig machen', status: ['neu', 'angesprochen', 'gerade_nicht'],       arts: ['erstkontakt', 'feedback_bitte', 'nachfassen'] },
+    { nr: 1, name: 'Neugierig machen', status: ['neu', 'angesprochen', 'gerade_nicht'],       arts: ['erstkontakt', 'erklaervideo', 'feedback_bitte', 'nachfassen'] },
     { nr: 2, name: 'Ausprobieren',     status: ['test_eingeladen', 'test_gemacht', 'probiert'], arts: ['einladung_test', 'gespraech_auswertung', 'einladung_ausprobieren', 'nachfassen'] },
     { nr: 3, name: 'Weitergeben',      status: ['kunde', 'partner'],                            arts: ['danke_pflege', 'feedback_danke', 'business_einladung', 'nachfassen'] },
   ];
@@ -47,6 +50,12 @@ window.CRM_DATA = (function () {
     // Dateinamen ohne Zielgruppe, weil Kontakte den Link sehen (Tanja 09.11.2026). Die alten Dateien in /videos bleiben liegen, damit schon verschickte Links weiter gehen.
     // Fassung 7 ersetzt Fassung 6 (Tanja 11.11.2026: „F6 ersetzen“): verständlicher, Tanjas eigene Stimme, nur ein Ziel (der Test). Key bleibt 'vision6'.
     // Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-7_9x16_klein.mp4. F6 liegt weiter unter /videos/signal-score.mp4, damit verschickte Links gehen.
+    // Einladungsvideo A2 „Dein Körper hört zu“ (Webinar Küffner), Tanjas eigene Stimme, 1:38, abgenommen 15.11.2026.
+    // Datei: Videos/Tanja-Wissel_Einladungsvideo-Dein-Koerper-hoert-zu_9x16_klein.mp4. Endet mit „Test“ oder „Erzähl mir mehr“ (→ Erklärvideo).
+    { key: 'koerper',     titel: 'Video „Dein Körper hört zu“', dauer: '1,5 Min.',
+      url: 'https://app.tanjawissel.ch/videos/dein-koerper-hoert-zu.mp4',
+      worum: 'Voller Alltag, eine ganz andere Art, auf die Signale des Körpers zu hören: kleine Patches, kurzer Test, Erklärvideo auf Wunsch',
+      fuer: 'für alle Kontakte als erstes Video; der Kontakt antwortet mit „Test“ (Link zum Test) oder „Erzähl mir mehr“ (Erklärvideo)' },
     { key: 'vision6',     titel: 'Video „Signal-Score“', dauer: '1,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/signal-score-test.mp4',
       worum: 'Kleine Patches für die Haut und der kurze Test (anonym, ca. 5 Min.): herausfinden, welche passen könnten',
@@ -98,6 +107,14 @@ window.CRM_DATA = (function () {
       anker:     'Hey {name} 😊 wie geht’s dir? Ist schon eine Weile her. Ich beschäftige mich gerade mit kleinen Patches, die man auf die Haut klebt, und das macht mir richtig Freude. Wenn du magst, schau dir in Ruhe dieses kurze Video an (1,5 Min.): [Video-Link] Ich freu mich, von dir zu hören.',
       kristall:  'Hallo {name} 😊 ich beschäftige mich gerade mit kleinen Patches für die Haut und mit der Technologie dahinter. Worum es geht, zeigt dieses Video (1,5 Min.): [Video-Link] Mich interessiert deine ehrliche Einschätzung. Die Hintergründe erkläre ich dir gern. LG',
       neutral:   'Hey {name} 😊 ich hab etwas entdeckt, das mich gerade richtig begeistert: kleine Patches, die man auf die Haut klebt. In einem kurzen Video (1,5 Min.) siehst du, worum es geht: [Video-Link] Sag mir einfach ehrlich deine Meinung 😊',
+    },
+    // Antwort „Erzähl mir mehr“ (Tanja 15.11.2026): Erklärvideo Technologie, Fragen anbieten, kein Business, kein Test-Link
+    erklaervideo: {
+      pfeil:    'Hey {name} 😊 schön, dass du mehr wissen willst! Hier ist das Erklärvideo zur Technologie (3,5 Min.): [Video-Link] Sag mir danach einfach, was du denkst.',
+      funke:    'Hey {name} 😄 wie schön, dass du neugierig bist! Hier kommt das Erklärvideo, da siehst du, wie die Patches funktionieren (3,5 Min.): [Video-Link] Ich bin gespannt, was du sagst!',
+      anker:    'Hey {name} 😊 danke für deine Antwort, das freut mich. Hier ist das kurze Erklärvideo zur Technologie, schau es dir ganz in Ruhe an (3,5 Min.): [Video-Link] Wenn Fragen auftauchen, bin ich gern für dich da.',
+      kristall: 'Hallo {name}, danke für dein Interesse. Hier ist das Erklärvideo zur Technologie, ruhig und sachlich erklärt (3,5 Min.): [Video-Link] Wenn du danach Fragen hast, beantworte ich sie gern. LG',
+      neutral:  'Hey {name} 😊 schön, dass du mehr wissen magst! Hier ist das Erklärvideo zur Technologie (3,5 Min.): [Video-Link] Sag mir gern, was du darüber denkst. LG',
     },
     // {link} = direkter Link zum Signalscore-Test der Person (signal.superpatch.com/de-DE/survey?rsu=…), erzeugt aus ihrem Superpatch-Link (Tanja 09.11.2026)
     einladung_test: {
