@@ -24,22 +24,28 @@ window.CRM_DATA = (function () {
     { key: 'erklaervideo',           name: 'Erklärvideo schicken',      short: 'Erklärvideo',   next: null, video: true, defaultVideo: 'technologie', ohneFu: true },
     { key: 'einladung_test',         name: 'Einladung zum Test',        short: 'Einladung Test', next: 'test_eingeladen' },
     { key: 'gespraech_auswertung',   name: 'Gespräch zur Auswertung',   short: 'Auswertung',    next: null },
-    { key: 'einladung_ausprobieren', name: 'Zum Ausprobieren einladen', short: 'Ausprobieren',  next: null },
-    { key: 'nachfassen',             name: 'Nachfassen',                short: 'Nachfassen',    next: null },
+    // siebener = 7er-Pack darf vorkommen (Tanja 21.11.2026, nur Europa/€): Häkchen „Favorite Four“ + Info-Karte für Partner
+    { key: 'einladung_ausprobieren', name: 'Zum Ausprobieren einladen', short: 'Ausprobieren',  next: null, siebener: true },
+    // 7er-Pakete (Einführungsmail Superpatch 20.11.2026, Freigabe Tanja 21.11.2026): Neukunden „eine Woche ausprobieren“, Kunden „neuen Patch entdecken“
+    { key: 'woche_ausprobieren',     name: 'Eine Woche ausprobieren (7er-Pack)', short: '7er: eine Woche', next: 'probiert', siebener: true },
+    { key: 'neuer_patch',            name: 'Neuen Patch entdecken (7er-Pack)',   short: '7er: neuer Patch', next: null, siebener: true },
+    { key: 'nachfassen',            name: 'Nachfassen',                short: 'Nachfassen',    next: null },
     { key: 'danke_pflege',           name: 'Danke & Kundenpflege',      short: 'Danke & Pflege', next: null },
     // Nur sichtbar, wenn beim Kontakt „Offen für das Business-Thema“ an ist (Tanja 09.11.2026)
     { key: 'business_einladung',     name: 'Business-Einladung',        short: 'Business-Einladung', next: null, business: true, video: true },
     // Um einen Gefallen bitten (Tanja 09.11.2026): Video anschauen + ehrliches Feedback. Nach 3 Tagen Danke + Empfehlungsfrage (zwei getrennte Schritte).
     { key: 'feedback_bitte',         name: 'Um Feedback bitten',        short: 'Feedback-Bitte', next: 'angesprochen', video: true, fu: { tage: 3, art: 'feedback_danke' } },
     { key: 'feedback_danke',         name: 'Danke fürs Feedback & Empfehlung', short: 'Feedback-Danke', next: null },
+    // Abgleich KI Networker, Vorschlag 1 (Tanja 21.11.2026): Antwort auf eine Frage oder ein Bedenken, in jedem Schritt wählbar. frage = Eingabefeld „Was hat … geschrieben?“
+    { key: 'frage_antworten',        name: 'Auf Frage oder Bedenken antworten', short: 'Frage beantworten', next: null, frage: true, ohneFu: true },
   ];
 
   // Einladungsweg in 3 Schritten (Tanja 15.11.2026, Webinar Küffner „Duplikation“, A1).
   // Die Seite „Nachricht an …“ zeigt den Schritt zum Status und nur diese Arten; alle Arten bleiben unter „alle Nachrichten zeigen“.
   const SCHRITTE = [
-    { nr: 1, name: 'Neugierig machen', status: ['neu', 'angesprochen', 'gerade_nicht'],       arts: ['erstkontakt', 'erklaervideo', 'feedback_bitte', 'nachfassen'] },
-    { nr: 2, name: 'Ausprobieren',     status: ['test_eingeladen', 'test_gemacht', 'probiert'], arts: ['einladung_test', 'gespraech_auswertung', 'einladung_ausprobieren', 'nachfassen'] },
-    { nr: 3, name: 'Weitergeben',      status: ['kunde', 'partner'],                            arts: ['danke_pflege', 'feedback_danke', 'business_einladung', 'nachfassen'] },
+    { nr: 1, name: 'Neugierig machen', status: ['neu', 'angesprochen', 'gerade_nicht'],       arts: ['erstkontakt', 'erklaervideo', 'feedback_bitte', 'nachfassen', 'woche_ausprobieren', 'frage_antworten'] },
+    { nr: 2, name: 'Ausprobieren',     status: ['test_eingeladen', 'test_gemacht', 'probiert'], arts: ['einladung_test', 'gespraech_auswertung', 'einladung_ausprobieren', 'woche_ausprobieren', 'nachfassen', 'frage_antworten'] },
+    { nr: 3, name: 'Weitergeben',      status: ['kunde', 'partner'],                            arts: ['danke_pflege', 'neuer_patch', 'feedback_danke', 'business_einladung', 'nachfassen', 'frage_antworten'] },
   ];
 
   // Videos zum Weiterleiten (Tanja 09.11.2026: mehrere zur Auswahl, nicht jedes passt für jeden).
@@ -98,6 +104,7 @@ window.CRM_DATA = (function () {
   // Beispielentwürfe für den Prototyp (ohne KI), in einem Beispiel-Wortstil „herzlich-direkt, Hey + Emoji, LG“.
   // In der App schreibt die KI sie aus Wortstil-Steckbrief + Typ + Notizen. {name} und {link} werden ersetzt.
   // Feste Regeln: keine Krankheiten/Beschwerden, keine Preise, keine Patch-Anzahl, keine 7er-Probierpakete, kein Druck.
+  // Ausnahme seit 21.11.2026 (Tanja): Arten mit siebener: true nennen das 7er-Pack mit dem Europa-Preis von Superpatch, immer „zzgl. MwSt. und Versand“.
   // Stand 09.11.2026: Gesprächsbausteine mit rotem Faden aus den Visions-Videos (E2–E4, E6, N1, K3, N5, N7, V3, B1–B6, R1–R10).
   const DRAFTS = {
     // Neu 15.11.2026 (Tanja, A1): sagt, worum es geht, mit Video. Superpatch-Name und Test-Link erst später.
@@ -132,11 +139,27 @@ window.CRM_DATA = (function () {
       neutral:  'Hallo {name}, danke, dass du den Test gemacht hast! Was hat dich an deinem Ergebnis am meisten überrascht? Magst du kurz mit mir drüber sprechen, eher unter der Woche oder am Wochenende?',
     },
     einladung_ausprobieren: {
-      pfeil:    'Hallo {name}, ich hab gesehen, dass du den Test gemacht hast 😊 Wollen wir kurz über dein Ergebnis sprechen? Am besten probierst du es selbst aus. Ich kann dir einen Testpatch geben.',
-      funke:    'Hallo {name} 😄 du hast den Test gemacht, wie cool! Was sagst du zu deinem Ergebnis? Lass uns kurz drüber quatschen, und wenn du Lust hast, bring ich dir einen Testpatch mit. Probier es selbst aus und sag mir, wie du es findest!',
-      anker:    'Hallo {name} 😊 danke dir, dass du den Test gemacht hast. Wenn du magst, schauen wir uns dein Ergebnis in Ruhe zusammen an. Und falls es sich für dich gut anfühlt, kannst du es ganz unverbindlich selbst ausprobieren, in deinem Tempo. Ich geb dir gern einen Testpatch.',
-      kristall: 'Hallo {name}, danke, dass du den Test gemacht hast. Wenn du magst, gehen wir dein Ergebnis und die Empfehlung zusammen durch, ich erkläre dir gern die Hintergründe. Wenn du es danach selbst prüfen möchtest: Ich geb dir gern einen Testpatch, oder du schaust in meinem Shop: {link}\nLass dir Zeit. LG',
-      neutral:  'Hallo {name} 😊 ich hab gesehen, dass du den Test gemacht hast, danke dir! Magst du kurz über dein Ergebnis sprechen? Am besten probierst du es selbst aus: Ich geb dir gern einen Testpatch, oder du schaust dich in meinem Shop um: {link}',
+      pfeil:    'Hallo {name}, ich hab gesehen, dass du den Test gemacht hast 😊 Wollen wir kurz über dein Ergebnis sprechen? Am besten probierst du es selbst aus. Ich kann dir einen Testpatch geben, oder du startest mit einem 7er-Pack, einer Woche zum Ausprobieren für 26 € (zzgl. MwSt. und Versand): {link}',
+      funke:    'Hallo {name} 😄 du hast den Test gemacht, wie cool! Was sagst du zu deinem Ergebnis? Lass uns kurz drüber quatschen, und wenn du Lust hast, bring ich dir einen Testpatch mit. Oder du holst dir gleich ein 7er-Pack, eine ganze Woche zum Entdecken für 26 € (zzgl. MwSt. und Versand): {link} Sag mir, wie du es findest!',
+      anker:    'Hallo {name} 😊 danke dir, dass du den Test gemacht hast. Wenn du magst, schauen wir uns dein Ergebnis in Ruhe zusammen an. Und falls es sich für dich gut anfühlt, kannst du es ganz unverbindlich selbst ausprobieren, in deinem Tempo: mit einem Testpatch von mir oder einem 7er-Pack, einer Woche für 26 € (zzgl. MwSt. und Versand): {link}',
+      kristall: 'Hallo {name}, danke, dass du den Test gemacht hast. Wenn du magst, gehen wir dein Ergebnis und die Empfehlung zusammen durch, ich erkläre dir gern die Hintergründe. Wenn du es danach selbst prüfen möchtest: Ich geb dir gern einen Testpatch, oder du startest mit einem 7er-Pack, einer Woche für 26 € (zzgl. MwSt. und Versand): {link}\nLass dir Zeit. LG',
+      neutral:  'Hallo {name} 😊 ich hab gesehen, dass du den Test gemacht hast, danke dir! Magst du kurz über dein Ergebnis sprechen? Am besten probierst du es selbst aus: Ich geb dir gern einen Testpatch, oder du startest mit einem 7er-Pack, einer Woche zum Ausprobieren für 26 € (zzgl. MwSt. und Versand): {link}',
+    },
+    // 7er-Pack für Neukunden (Tanja 21.11.2026, Vorschlag Punkt 1). {link} = Shop-Link der Person.
+    woche_ausprobieren: {
+      pfeil:    'Hallo {name}, der einfachste Start: das 7er-Pack, eine Woche zum Ausprobieren, 26 € (zzgl. MwSt. und Versand). Hier geht’s lang: {link} Welcher Patch interessiert dich am meisten?',
+      funke:    'Hallo {name} 😄 du willst es ausprobieren, wie schön! Mit dem 7er-Pack hast du eine ganze Woche zum Entdecken, für 26 € (zzgl. MwSt. und Versand): {link} Ich bin gespannt, welchen du dir aussuchst!',
+      anker:    'Hallo {name} 😊 wenn du magst, startest du ganz in Ruhe mit einem 7er-Pack: eine Woche zum Ausprobieren, für 26 € (zzgl. MwSt. und Versand). Schau es dir an, wann es dir passt: {link} Ich helfe dir gern beim Aussuchen.',
+      kristall: 'Hallo {name}, für einen ersten Eindruck gibt es das 7er-Pack: eine Woche Super Patch für 26 € (zzgl. MwSt. und Versand). Hier findest du alle Details: {link} Wenn du Fragen zur Auswahl hast, erkläre ich dir gern die Hintergründe. LG',
+      neutral:  'Hallo {name} 😊 schön, dass du neugierig bist! Ein einfacher Start ist das 7er-Pack: eine Woche Super Patch zum Ausprobieren, für 26 € (zzgl. MwSt. und Versand). Hier kannst du es dir anschauen: {link} Sag mir gern, welcher dich anspricht, dann suchen wir zusammen den passenden aus.',
+    },
+    // 7er-Pack für Kunden: einen weiteren Patch kennenlernen (Tanja 21.11.2026, Vorschlag Punkt 3)
+    neuer_patch: {
+      pfeil:    'Hallo {name}, kurze Idee: Mit dem 7er-Pack testest du einen neuen Patch eine Woche lang, für 26 € (zzgl. MwSt. und Versand): {link} Welcher reizt dich?',
+      funke:    'Hallo {name} 😄 Lust auf etwas Neues? Mit dem 7er-Pack probierst du einen weiteren Patch eine Woche lang aus, für 26 € (zzgl. MwSt. und Versand): {link} Ich bin gespannt, welchen du nimmst!',
+      anker:    'Hallo {name} 😊 wie geht es dir? Falls du Lust hast, einen weiteren Patch kennenzulernen: Mit dem 7er-Pack geht das ganz entspannt, eine Woche lang, für 26 € (zzgl. MwSt. und Versand): {link} Ich bin gern für dich da, wenn du Fragen hast.',
+      kristall: 'Hallo {name}, falls du einen weiteren Patch kennenlernen möchtest: Das 7er-Pack ist eine Woche Super Patch für 26 € (zzgl. MwSt. und Versand): {link} Ich erkläre dir gern, worin sich die Patches unterscheiden. LG',
+      neutral:  'Hallo {name} 😊 wie geht’s dir? Lust, mal einen neuen Patch auszuprobieren? Mit dem 7er-Pack geht das ganz einfach: eine Woche für 26 € (zzgl. MwSt. und Versand): {link} Erzähl mir gern, was dich gerade interessiert.',
     },
     nachfassen: {
       pfeil:    'Hallo {name}, kurze Frage: Bist du schon dazu gekommen, reinzuschauen? Welche Frage ist bei dir noch offen? 😊',
@@ -175,6 +198,14 @@ window.CRM_DATA = (function () {
       kristall: 'Hallo {name}, danke, dass du dir das Video angesehen hast. Wie war deine ehrliche Einschätzung? Und eine Frage noch: Kennst du jemanden, der offen für neue Wege ist und sich das gern anschauen würde? Du kannst den Link einfach weitergeben, mehr braucht es nicht. LG',
       neutral:  'Hallo {name} 😊 danke dir, dass du ins Video geschaut hast! Was hat dir am besten gefallen? Und falls dir jemand einfällt, der offen für etwas Neues ist und das spannend finden könnte: Gib das Video einfach weiter. Das reicht völlig, die Person meldet sich, wenn sie mag.',
     },
+    // Antwort auf eine Frage (ohne KI nur ein allgemeiner Rahmen): Verständnis → Kern im Gespräch → öffnende Frage
+    frage_antworten: {
+      pfeil:    'Hallo {name}, gute Frage, danke dir! Das erklär ich dir am besten kurz am Telefon, dann kann ich genau darauf eingehen. Passt dir heute oder morgen besser?',
+      funke:    'Hallo {name} 😊 danke, dass du so offen fragst, das mag ich! Lass uns kurz telefonieren, dann erzähl ich dir, wie ich das selbst erlebt habe. Wann passt es dir?',
+      anker:    'Hallo {name} 😊 danke, dass du mir das so ehrlich schreibst. Ich verstehe gut, dass du dir darüber Gedanken machst. Magst du mir erzählen, was dich dabei am meisten beschäftigt? Dann schauen wir es uns ganz in Ruhe zusammen an.',
+      kristall: 'Hallo {name}, danke für deine Frage, die ist berechtigt. Ich möchte sie dir lieber richtig beantworten als nur kurz per Nachricht. Sollen wir uns die Hintergründe zusammen anschauen? LG',
+      neutral:  'Hallo {name} 😊 danke für deine Frage, die ist berechtigt. Am besten erklär ich dir das kurz persönlich, dann kann ich genau darauf eingehen. Was beschäftigt dich dabei am meisten?',
+    },
   };
   // Begleittext zu Videos mit test: true. {link} = direkter Link zum Signalscore-Test der Person.
   const VIDEO_TEST_TEXT = 'Wenn du neugierig bist, mach danach gern den kurzen Test (ca. 5 Minuten, anonym): {link}';
@@ -189,6 +220,17 @@ window.CRM_DATA = (function () {
   const EMPFEHLUNG_LINE = 'Falls es für dich selbst gerade nicht passt: Kennst du jemanden in deinem Umfeld, der offen für etwas Neues ist oder gern wissen möchte, wo er gerade steht? Weitergeben reicht völlig. Sag mir einfach Bescheid, dann schick ich dir den Link dafür.';
   // Nur wenn beim Kontakt „Offen für das Business-Thema“ an ist UND im Entwurf ausdrücklich gewählt.
   const BUSINESS_LINE = 'Übrigens: Falls du Lust hast, das selbst weiterzuempfehlen, erzähl ich dir gern, wie ich das mache. Ganz unverbindlich.';
+  // 7er-Pakete (Tanja 21.11.2026): nur Europa, nur Euro. Häkchen „Favorite Four“ hängt diese Zeile an (ohne KI).
+  const FAVORITE_LINE = 'Und wenn du gleich mehrere entdecken möchtest: Kombinier vier 7er-Packs nach Wahl für 89 € statt 104 € (zzgl. MwSt. und Versand), der Rabatt kommt an der Kasse automatisch.';
+  // Info-Karte für Partner, erscheint bei Arten mit siebener: true
+  const SIEBENER_INFO = [
+    'Eine Woche Super Patch zum günstigeren Einstieg. Die normalen Packungen bleiben, wie sie sind, SmartShip läuft weiter wie bisher.',
+    'Verfügbar für Kontakte in der EU und in Norwegen. In der Schweiz und in Großbritannien gibt es die 7er noch nicht, dort wählst du eine andere Nachricht.',
+    'Preis: 26 € je 7er-Pack, Favorite Four (vier 7er-Packs gemischt) 89 € statt 104 €, jeweils zzgl. MwSt. und Versand.',
+    'Favorite Four bestellt dein Kontakt selbst über deinen Shop-Link, der Rabatt kommt an der Kasse automatisch.',
+    'Für dich im BackOffice: Im Warenkorb gibt es 7er-Packs als Bündel aus 4 Packs derselben Technologie (z. B. 4× Defend). Gemischt bestellen geht nur im Kundenshop.',
+    'Gib ein 7er-Pack am besten als Ganzes weiter.',
+  ];
 
   // Wortstil-Steckbrief: gleiche Felder wie in supabase/functions/_shared/wortstil-prompts.js
   const STECKBRIEF_FIELDS = [
@@ -197,6 +239,6 @@ window.CRM_DATA = (function () {
     ['lieblingswoerter', 'Lieblingswörter'], ['nie', 'Würde nie sagen'], ['sprache', 'Sprachnachricht vs. Text'],
   ];
 
-  return { STECKBRIEF_FIELDS, STATUS, ARTS, SCHRITTE, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE,
+  return { STECKBRIEF_FIELDS, STATUS, ARTS, SCHRITTE, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE, FAVORITE_LINE, SIEBENER_INFO,
     HANDBUCH: 'https://heyzine.com/flip-book/e2bfcd5caf.html' };
 })();

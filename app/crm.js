@@ -577,7 +577,7 @@
   const fuLabel = (d) => d === 1 ? '1 Tag' : d >= 90 ? '3 Monaten' : `${d} Tagen`;
   function viewSprachnotiz(r) {
     if (!REC || REC._hash !== location.hash) {
-      REC = { _hash: location.hash, text: '', kontakt_id: r.params.k || '', neuName: '', hinweis: false, status: '', fu: 'auto' };
+      REC = { _hash: location.hash, text: '', kontakt_id: r.params.k || '', neuName: '', hinweis: false, status: '', fu: 'auto', danke: '', vorschlag: null, nbLoading: false, nbError: '' };
     }
     const fixed = r.params.k && kontakt(r.params.k);
     const back = fixed ? `#/kontakt/${esc(fixed.id)}` : '#/heute';
@@ -602,6 +602,7 @@
             ${S.kontakte.slice().sort((a, b) => a.name.localeCompare(b.name)).map((x) => `<option value="${esc(x.id)}" ${REC.kontakt_id === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
           ${REC.kontakt_id === '__neu' ? `<label class="field" for="r-new">Name des neuen Kontakts</label><input type="text" id="r-new" data-rec="neuName" value="${esc(REC.neuName)}" maxlength="80">
             ${hinweisOffen() ? hinweisHtml(REC.hinweis, 'data-rec="hinweis"') : ''}` : ''}`}
+        ${nachbereitungHtml(k, curStatus)}
         <div class="row2">
           <div><label class="field" for="r-status">Status ändern?</label>
             <select id="r-status" data-rec="status">${C.STATUS.map((s) => `<option value="${s.key}" ${selStatus === s.key ? 'selected' : ''}>${s.icon} ${s.name}${s.key === curStatus ? ' (bleibt)' : ''}</option>`).join('')}</select></div>
@@ -615,9 +616,67 @@
         <div class="actions end"><button class="btn" data-act="rec-save">Speichern</button></div>
       </section>`;
   }
+  // Abgleich KI Networker, Vorschlag 2 (Tanja 21.11.2026): aus der Notiz eine Danke-Nachricht + Vorschlag für Status und Follow-up.
+  // Die Person bestätigt alles selbst: Vorschlag steht unten in den Feldern, die Nachricht verschickt sie selbst.
+  function nachbereitungHtml(k, curStatus) {
+    if (!aiReady()) return '<p class="small muted">Tipp: Mit eingeschalteten KI-Entwürfen macht die App dir hier aus deiner Notiz eine Danke-Nachricht und schlägt Status und Follow-up vor.</p>';
+    const name = k ? firstName(k.name) : (REC.neuName.trim() ? firstName(REC.neuName.trim()) : 'deinen Kontakt');
+    const v = REC.vorschlag;
+    const waNum = ((k && k.telefon) || '').replace(/[^\d]/g, '');
+    const vText = v ? [v.status !== curStatus ? `Status „${esc(statusOf(v.status).name)}“` : 'Status bleibt', v.tage == null ? '' : v.tage ? `Follow-up in ${fuLabel(v.tage)}` : 'kein Follow-up'].filter(Boolean).join(', ') : '';
+    return `<div class="card sand" style="margin-top:12px">
+        <div class="card-head"><div>✨ <b>Danke-Nachricht an ${esc(name)}</b></div>
+          <button class="btn secondary small" data-act="rec-danke" ${REC.nbLoading ? 'disabled' : ''}>${REC.danke ? '↻ Neu schreiben' : 'Aus der Notiz schreiben'}</button></div>
+        ${REC.nbLoading ? '<div class="thinking"><span class="dot"></span>Die KI schreibt deine Danke-Nachricht …</div>' : ''}
+        ${REC.nbError ? `<p class="notice warm small">${esc(REC.nbError)}</p>` : ''}
+        ${REC.danke && !REC.nbLoading ? `
+          <textarea id="r-danke" data-rec="danke" class="draft-area" maxlength="2000" style="margin-top:8px">${esc(REC.danke)}</textarea>
+          ${v ? `<p class="small" style="margin:6px 0 0"><b>Vorschlag:</b> ${vText}.${v.grund ? ` ${esc(v.grund)}` : ''} <span class="muted">Steht schon unten in den Feldern, du kannst es ändern.</span></p>` : ''}
+          <div class="actions"><button class="btn small" data-act="rec-danke-copy">📋 Kopieren</button>
+            <a class="btn olive small" id="r-danke-wa" href="https://wa.me/${waNum}?text=${encodeURIComponent(REC.danke)}" target="_blank" rel="noopener">WhatsApp</a></div>
+          <p class="small muted" style="margin-bottom:0">Lies sie kurz durch und verschick sie selbst. Danach unten speichern.</p>`
+        : `<p class="small muted" style="margin-bottom:0">Die KI liest deine Notiz (ohne Namen), schreibt in deinem Ton eine kurze Danke-Nachricht und schlägt Status und Follow-up vor.</p>`}
+      </div>`;
+  }
+  async function writeDanke() {
+    if (!REC || REC.nbLoading) return;
+    if (!REC.text.trim()) { toast('Schreib zuerst kurz auf, was besprochen wurde.'); return; }
+    const k = REC.kontakt_id && REC.kontakt_id !== '__neu' ? kontakt(REC.kontakt_id) : null;
+    const name = k ? k.name : REC.neuName.trim();
+    if (!k && !(REC.kontakt_id === '__neu' && name)) { toast('Wähl zuerst den Kontakt aus.'); return; }
+    const cur = k ? k.status : 'neu';
+    const rec = REC;
+    rec.nbLoading = true; rec.nbError = ''; render();
+    let out = null, error = '';
+    try {
+      out = await T.callWortstil({
+        action: 'crm_entwurf', art: 'gespraech_danke', nachbereitung: true, status: cur,
+        gespraech: maskName(name, rec.text).slice(0, 2000), typ: (k && k.typ_geschaetzt) || null,
+        profile: T.state.steckbrief || null, notes: k ? notesForAi(k) : [],
+        muster: (T.state.muster || []).slice(0, MUSTER_MAX).map((m) => m.text),
+      });
+      if (!out || !out.text) error = 'upstream_error';
+    } catch (e) { error = (e && e.code) || 'upstream_error'; }
+    if (REC !== rec) return; // Seite inzwischen verlassen
+    rec.nbLoading = false;
+    if (error) {
+      rec.nbError = (AI_ERRORS[error] || 'Das hat leider nicht geklappt. Versuch es bitte nochmal.') + ` (Fehlercode: ${error})`;
+    } else {
+      rec.danke = fillPlaceholders({ name }, out.text, 'gespraech_danke');
+      const v = out.vorschlag || null;
+      rec.vorschlag = v;
+      if (v) {
+        rec.status = v.status && v.status !== cur ? v.status : '';
+        rec.fu = v.tage == null ? 'auto' : v.tage === 0 ? 'none' : String(v.tage);
+      }
+    }
+    if (T.route().name === 'sprachnotiz') render();
+  }
   function afterSprachnotiz() {
     const ta = document.getElementById('r-text');
     if (ta && !REC._focused) { REC._focused = true; ta.focus(); }
+    const dk = document.getElementById('r-danke');
+    if (dk) dk.addEventListener('input', () => { const wa = document.getElementById('r-danke-wa'); if (wa) wa.href = wa.href.split('?')[0] + '?text=' + encodeURIComponent(dk.value); });
     document.querySelectorAll('[data-rec]').forEach((el) => {
       const key = el.dataset.rec;
       const evt = el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input';
@@ -678,12 +737,16 @@
   function fillPlaceholders(k, text, art) {
     return fillVideo(String(text || '').replace(/\[Name\]/g, firstName(k.name)).replace(/\[Test-Link\]/g, testLinkOr()).replace(/\[(?:Link|dein Link)\]/g, linkFor(art)));
   }
+  // 7er-Pakete (Tanja 21.11.2026): Häkchen „Favorite Four“ gilt nur bei Arten mit siebener: true
+  const isSiebener = (art) => !!(artOf(art) && artOf(art).siebener);
+  const favOn = (art) => !!(DR && DR.favorite && isSiebener(art));
   function buildDraft(k, art, business, empfehlung) {
     const vd = DR && DR.video && C.VIDEO_DRAFTS[DR.video.key]; // eigener Text je Video (z. B. Signal-Score)
     const tpl = (vd && vd[art]) || (C.DRAFTS[art] || {})[k.typ_geschaetzt || 'neutral'] || C.DRAFTS[art].neutral;
     let text = tpl.replace(/\{name\}/g, firstName(k.name)).replace(/\{testlink\}/g, testLinkOr()).replace(/\{link\}/g, linkFor(art));
     if (business && art !== 'business_einladung') text += '\n\n' + C.BUSINESS_LINE;
     if (empfehlung && art === 'nachfassen') text += '\n\n' + C.EMPFEHLUNG_LINE;
+    if (favOn(art)) text += '\n\n' + C.FAVORITE_LINE; // 7er-Pakete: Favorite Four (Tanja 21.11.2026)
     return fillVideo(text);
   }
 
@@ -742,6 +805,12 @@
     return S.notizen.filter((n) => n.kontakt_id === k.id).sort((a, b) => b.erstellt_am.localeCompare(a.erstellt_am)).slice(0, 3)
       .map((n) => (hide ? n.text.replace(hide, '$1[Name]') : n.text).slice(0, 600));
   }
+  // Vor- und Nachname des Kontakts → [Name] (für Text, den die Person für die KI eingibt: Frage des Kontakts, Gesprächsnotiz)
+  function maskName(name, text) {
+    const words = String(name || '').split(/\s+/).filter((w) => w.length >= 2).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (!words.length) return String(text || '');
+    return String(text || '').replace(new RegExp(`(^|[^\\p{L}])(${words.join('|')})(?![\\p{L}])`, 'giu'), '$1[Name]');
+  }
   // Musternachrichten (max. 3, die Datenbank löscht das älteste): Vorname des Kontakts → [Name], eigener Link → [Link]
   const MUSTER_MAX = 3;
   function musterText(k, text) {
@@ -768,39 +837,48 @@
   // opts: { fresh: true } ignoriert den Zwischenspeicher, { feedback } für „Was soll anders sein?“
   async function generate(k, opts) {
     const o = opts || {};
-    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung && DR.art === 'nachfassen' ? 1 : 0}|${(DR.video && DR.video.key) || ''}`;
+    const mitFrage = !!artOf(DR.art).frage;
+    const key = `${DR.art}|${DR.business ? 1 : 0}|${DR.empfehlung && DR.art === 'nachfassen' ? 1 : 0}|${(DR.video && DR.video.key) || ''}|${mitFrage ? DR.frage.trim() : ''}|${favOn(DR.art) ? 1 : 0}`;
     DR.error = ''; DR.kiText = '';
     if (!o.fresh && !o.feedback && DR.cache[key]) { Object.assign(DR, DR.cache[key]); DR.text = fillVideo(DR.text); render(); return; }
     if (!aiReady()) {
-      DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; DR.loading = false;
-      DR.cache[key] = { text: DR.text, source: DR.source };
+      DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; DR.loading = false; DR.varianten = null;
+      DR.cache[key] = { text: DR.text, source: DR.source, varianten: null };
       render(); return;
     }
     const token = ++DR.token;
     const previous = DR.text;
     DR.loading = true; render();
-    let text = '', error = '';
+    let text = '', error = '', varianten = null;
     try {
       const out = await T.callWortstil({
         action: 'crm_entwurf', art: DR.art, typ: k.typ_geschaetzt || null,
-        profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business, empfehlung: !!DR.empfehlung && DR.art === 'nachfassen',
+        profile: T.state.steckbrief || null, notes: notesForAi(k), business: !!DR.business, empfehlung: !!DR.empfehlung && DR.art === 'nachfassen', favorite: favOn(DR.art),
         muster: (T.state.muster || []).slice(0, MUSTER_MAX).map((m) => m.text),
         video: (DR.video && DR.video.key) || undefined, // nur der Schlüssel, den Text dazu hat der Server
         previous: o.feedback ? previous : undefined, feedback: o.feedback || undefined,
+        frage: mitFrage ? maskName(k.name, DR.frage.trim()).slice(0, 600) : undefined,
+        varianten: true, // Abgleich KI Networker, Vorschlag 3: zwei Fassungen in einem Aufruf (zählt einmal fürs Tageslimit)
       });
-      if (!out.text) error = 'upstream_error'; else text = out.text;
+      if (!out.text) error = 'upstream_error'; else { text = out.text; varianten = Array.isArray(out.varianten) && out.varianten.length > 1 ? out.varianten : null; }
     } catch (e) { error = (e && e.code) || 'upstream_error'; }
     if (!DR || DR.token !== token) return; // Kontakt oder Art wurde inzwischen gewechselt
     DR.loading = false;
     if (error) {
       DR.error = (AI_ERRORS[error] || 'Das hat leider nicht geklappt. Versuch es bitte nochmal.') + ` (Fehlercode: ${error})`;
       // Bei einem neuen Versuch bleibt der bisherige Text stehen, sonst gibt es den Beispielentwurf.
-      if (!previous) { DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; }
+      if (!previous) { DR.text = buildDraft(k, DR.art, DR.business, DR.empfehlung); DR.source = 'beispiel'; DR.varianten = null; }
     } else {
-      DR.text = fillPlaceholders(k, text, DR.art);
-      if (DR.video && !DR.text.includes(DR.video.url)) DR.text = DR.text.trim() + ' ' + DR.video.url;
+      const fill = (t) => {
+        let x = fillPlaceholders(k, t, DR.art);
+        if (DR.video && !x.includes(DR.video.url)) x = x.trim() + ' ' + DR.video.url;
+        return x;
+      };
+      DR.varianten = varianten ? varianten.map((v) => { const t = fill(v.text); return { key: v.key, text: t, ki: t }; }) : null;
+      DR.vIdx = 0;
+      DR.text = DR.varianten ? DR.varianten[0].text : fill(text);
       DR.source = 'ki'; DR.kiText = DR.text;
-      DR.cache[key] = { text: DR.text, source: DR.source, kiText: DR.kiText };
+      DR.cache[key] = { text: DR.text, source: DR.source, kiText: DR.kiText, varianten: DR.varianten, vIdx: 0 };
     }
     if (T.route().name === 'entwurf') render();
   }
@@ -833,13 +911,13 @@
     const k = kontakt(r.id);
     if (!k) return '<p>Diesen Kontakt gibt es nicht mehr.</p>';
     if (!DR || DR._for !== k.id) {
-      DR = { _for: k.id, art: r.params.art || statusOf(k.status).art, business: false, text: '', source: '', loading: false, error: '', cache: {}, token: 0, started: false, alle: false };
+      DR = { _for: k.id, art: r.params.art || statusOf(k.status).art, business: false, text: '', source: '', loading: false, error: '', cache: {}, token: 0, started: false, alle: false, frage: '', varianten: null, vIdx: 0 };
     }
     setDefaultVideo();
     const p = profil();
     const t = k.typ_geschaetzt && C.TYPES[k.typ_geschaetzt];
     const hasSb = !!T.state.steckbrief;
-    const needsLink = /einladung_test|einladung_ausprobieren/.test(DR.art) && !p.superpatch_link;
+    const needsLink = /einladung_test|einladung_ausprobieren|woche_ausprobieren|neuer_patch/.test(DR.art) && !p.superpatch_link;
     const isBiz = DR.art === 'business_einladung';
     const withVideo = !!artOf(DR.art).video; // Art lebt vom Video (Business-Einladung, Feedback-Bitte)
     // Empfehlungsfrage nie in der ersten Nachricht (Tanja 09.11.2026), nur beim Nachfassen; bei Feedback steckt sie in feedback_danke
@@ -847,7 +925,7 @@
     const waNum = (k.telefon || '').replace(/[^\d]/g, '');
     const off = DR.loading ? 'disabled' : '';
     const hint = DR.source === 'ki'
-      ? 'Von der KI aus deinem Wortstil, dem Typ und deinen Notizen. Bitte lies ihn durch und pass ihn an, bevor du ihn verschickst. Klingt das nach dir?'
+      ? `Von der KI aus deinem Wortstil, dem Typ und deinen Notizen.${DR.varianten && DR.varianten.length > 1 ? ' Oben wählst du zwischen zwei Fassungen.' : ''} Bitte lies ihn durch und pass ihn an, bevor du ihn verschickst. Klingt das nach dir?`
       : 'Beispielentwurf ohne KI.';
     return `
       <a class="back" href="#/kontakt/${esc(k.id)}">← ${esc(k.name)}</a>
@@ -862,15 +940,22 @@
         <p class="small">Dafür gehen dein Steckbrief, deine Musternachrichten, die Art der Nachricht, der geschätzte Typ und deine letzten 3 Notizen zu diesem Kontakt (ohne Namen) an Claude (Anthropic). Gespeichert wird dort nichts. Du kannst das im Profil jederzeit wieder ausschalten.</p>
         <div class="actions" style="margin-top:6px"><button class="btn small" data-act="ki-on" ${off}>KI-Entwürfe einschalten</button></div></div>`}
       ${noEmpf ? '' : `<label class="check"><input type="checkbox" data-act="empfehlung" ${DR.empfehlung ? 'checked' : ''} ${off}><span>Zusätzlich nach Menschen im Umfeld von ${esc(firstName(k.name))} fragen <span class="muted small">(vielleicht fällt ${esc(firstName(k.name))} jemand ein, für den es gerade passt)</span></span></label>`}
+      ${isSiebener(DR.art) ? `<details class="card sand siebener-info"><summary><b>📦 7er-Pack kurz erklärt</b> <span class="small muted">(nur für dich)</span></summary>
+        <ul class="small">${C.SIEBENER_INFO.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></details>
+        <label class="check"><input type="checkbox" data-act="favorite" ${DR.favorite ? 'checked' : ''} ${off}><span>Auswahl anbieten: Favorite Four <span class="muted small">(vier 7er-Packs gemischt, 89 € statt 104 €)</span></span></label>` : ''}
       ${k.business_offen && !isBiz ? `<label class="check"><input type="checkbox" data-act="business" ${DR.business ? 'checked' : ''} ${off}><span>Business-Thema erwähnen <span class="muted small">(nur weil du es beim Kontakt freigeschaltet hast)</span></span></label>` : ''}
       ${withVideo ? `<div class="card sand video-pick">
         <div class="card-head"><div>🎬 <b>Video:</b> ${DR.video ? esc(DR.video.titel) : '<span class="muted">noch keins gewählt</span>'}</div>
         <button class="btn secondary small" data-act="video-pick" ${off}>${DR.video ? 'ändern' : 'Video wählen'}</button></div>
         <div class="small muted">Es ersetzt [Video-Link] im Entwurf. Die Entscheidung bleibt bei ${esc(firstName(k.name))}: ${isBiz ? 'kein Druck, keine Zahlen, keine Versprechen' : 'ehrliches Feedback, ein Nein ist völlig in Ordnung'}.</div></div>`
         : `<div class="actions"><button class="btn ghost small" data-act="video-pick" ${off}>🎬 ${DR.video ? 'Video ändern: ' + esc(DR.video.titel) : 'Video in den Entwurf einfügen'}</button></div>`}
+      ${artOf(DR.art).frage ? `<label class="field" for="d-frage">Was hat ${esc(firstName(k.name))} gefragt oder geschrieben?</label>
+        <textarea id="d-frage" maxlength="600" rows="3" placeholder="z. B. Ist das nicht so ein Schneeballsystem?" ${off}>${esc(DR.frage)}</textarea>
+        <p class="small muted" style="margin-top:6px">Kurz in deinen Worten oder hineinkopiert. Bitte keine Gesundheitsangaben. Bedenken sind meist Fragen: Die Antwort zeigt Verständnis, geht auf den Kern ein und endet mit einer Frage.</p>` : ''}
       ${!DR.started ? `<div class="actions" style="margin-top:14px"><button class="btn wide" data-act="start">✍ ${aiReady() ? 'Entwurf schreiben' : 'Beispielentwurf zeigen'}: ${esc(artOf(DR.art).name || 'Nachricht')}</button></div>
       <p class="small muted" style="text-align:center;margin-top:8px">Erst wählen, dann schreibt ${aiReady() ? 'die KI' : 'die App'} den Entwurf.</p>${musterCard()}` : `
       <label class="field" for="d-text">Entwurf <span class="opt">(bearbeitbar)</span></label>
+      ${!DR.loading && DR.varianten && DR.varianten.length > 1 ? `<div class="art-chips" role="tablist" aria-label="Fassung wählen">${DR.varianten.map((v, i) => `<button class="chip ${DR.vIdx === i ? 'on' : ''}" data-act="variante" data-i="${i}" role="tab" aria-selected="${DR.vIdx === i}">${VARIANTE_LABEL[v.key] || `Fassung ${i + 1}`}</button>`).join('')}</div>` : ''}
       ${DR.loading ? '<div class="draft-area thinking-box"><div class="thinking"><span class="dot"></span>Die KI schreibt deinen Entwurf …</div></div>'
         : `<textarea id="d-text" class="draft-area" maxlength="2000">${esc(DR.text)}</textarea>`}
       ${DR.error ? `<p class="notice warm">${esc(DR.error)}</p>` : ''}
@@ -901,11 +986,15 @@
       <div class="actions"><button class="btn secondary small" data-act="muster-new">+ Eigene Nachricht eintragen</button></div>
     </details>`;
   }
+  const VARIANTE_LABEL = { persoenlicher: 'Persönlicher', kuerzer: 'Kürzer' };
   function afterEntwurf(r) {
+    const fr = document.getElementById('d-frage');
+    if (fr) fr.addEventListener('input', () => { DR.frage = fr.value; });
     const ta = document.getElementById('d-text');
     if (!ta) return;
     ta.addEventListener('input', () => {
       DR.text = ta.value;
+      if (DR.varianten && DR.varianten[DR.vIdx]) DR.varianten[DR.vIdx].text = ta.value; // eigene Änderung bleibt beim Hin- und Herwechseln
       const tipp = document.getElementById('muster-tipp');
       if (tipp) tipp.hidden = !(DR.kiText && DR.text.trim() !== DR.kiText.trim());
       const gt = document.getElementById('grund-tipp');
@@ -1186,6 +1275,8 @@
 
       // Gespräch
       case 'rec-save': return saveRec(el);
+      case 'rec-danke': return writeDanke();
+      case 'rec-danke-copy': if (REC && REC.danke.trim()) T.copyText(REC.danke, 'Kopiert. Jetzt selbst verschicken.'); return;
 
       // Entwurf
       // Erst wählen, dann schreiben (Tanja 15.11.2026): ein Wechsel startet die KI nicht, der Knopf „Entwurf schreiben“ erscheint wieder
@@ -1195,9 +1286,18 @@
       case 'antwort-test': DR = null; go(`#/entwurf/${k.id}?art=einladung_test`); return;
       // „Erzähl mir mehr“ = Erklärvideo Technologie (Tanja 15.11.2026, Einladungsvideo A2), nicht mehr die Business-Einladung
       case 'antwort-mehr': DR = null; go(`#/entwurf/${k.id}?art=erklaervideo`); return;
-      case 'start': if (DR.loading) return; DR.started = true; DR.text = ''; generate(k); return;
+      case 'start':
+        if (DR.loading) return;
+        if (artOf(DR.art).frage && !DR.frage.trim()) { toast(`Trag zuerst ein, was ${firstName(k.name)} gefragt oder geschrieben hat.`); const f = document.getElementById('d-frage'); if (f) f.focus(); return; }
+        DR.started = true; DR.text = ''; generate(k); return;
+      case 'variante': {
+        const v = DR.varianten && DR.varianten[Number(el.dataset.i)];
+        if (!v || DR.loading) return;
+        DR.vIdx = Number(el.dataset.i); DR.text = v.text; DR.kiText = v.ki; render(); return;
+      }
       case 'business': if (DR.loading) return; DR.business = el.checked; DR.text = ''; DR.started = false; render(); return;
       case 'empfehlung': if (DR.loading) return; DR.empfehlung = el.checked; DR.text = ''; DR.started = false; render(); return;
+      case 'favorite': if (DR.loading) return; DR.favorite = el.checked; DR.text = ''; DR.started = false; render(); return;
       case 'ki-on': return once(async () => {
         const row = await db(sb.from('profil').update({ einwilligung_ki_am: new Date().toISOString() }).eq('id', T.state.session.user.id).select().single());
         if (!row) return;
