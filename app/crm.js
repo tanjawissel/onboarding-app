@@ -87,6 +87,8 @@
   // Kontakt ändern; bei neuem Status schreibt die Datenbank Verlauf und status_seit
   async function updateK(k, patch) {
     if (patch.status && patch.status !== 'kunde') patch.smartship = false;
+    // Partner geworden: „Offen für das Business-Thema“ ist erledigt (Tanja 22.11.2026)
+    if (patch.status === 'partner') patch.business_offen = false;
     const row = await db(sb.from('kontakte').update(patch).eq('id', k.id).select().single());
     if (!row) return null;
     const before = k.status;
