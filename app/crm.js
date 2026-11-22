@@ -31,7 +31,7 @@
   const render = () => T.render();
   const go = (hash) => T.go(hash);
   const toast = T.toast;
-  const crmView = (name) => ['heute', 'kontakte', 'kontakt', 'neu', 'sprachnotiz', 'entwurf', 'import'].includes(name);
+  const crmView = (name) => ['heute', 'kontakte', 'kontakt', 'neu', 'sprachnotiz', 'entwurf', 'import', 'wer'].includes(name);
 
   // ---------- Speicher (nur im Arbeitsspeicher, Quelle ist die Datenbank) ----------
   const empty = () => ({ kontakte: [], notizen: [], verlauf: [], entwuerfe: [], prioritaeten: [] });
@@ -290,7 +290,7 @@
       if (!da) return a.follow_up_am.localeCompare(b.follow_up_am);
       return b.geaendert_am.localeCompare(a.geaendert_am);
     });
-    if (!S.kontakte.length) return '<div class="card empty">Trag deinen ersten Kontakt ein. Nur Menschen, die du persönlich kennst.<div class="actions" style="justify-content:center"><a class="btn" href="#/neu">＋ Kontakt eintragen</a><a class="btn secondary" href="#/import">📲 Vom Handy übernehmen</a></div></div>';
+    if (!S.kontakte.length) return '<div class="card empty">Trag deinen ersten Kontakt ein. Nur Menschen, die du persönlich kennst.<div class="actions" style="justify-content:center"><a class="btn" href="#/neu">＋ Kontakt eintragen</a><a class="btn secondary" href="#/import">📲 Vom Handy übernehmen</a></div><p class="small" style="margin:10px 0 0">Dir fällt gerade niemand ein? <a href="#/wer">Wer fällt dir ein? ›</a></p></div>';
     if (!list.length) return '<div class="card empty">Hier ist gerade niemand.</div>';
     return `<ul class="clist">${list.map((k) => {
       const s = statusOf(k.status);
@@ -399,7 +399,7 @@
     return `
       <a class="back" href="${editing ? '#/kontakt/' + esc(k.id) : '#/kontakte'}">← ${editing ? esc(k.name) : 'Kontakte'}</a>
       <h1>${editing ? 'Kontakt bearbeiten' : 'Neuer Kontakt'}</h1>
-      ${editing ? '' : '<p class="small" style="margin-top:-4px">Schon im Handy gespeichert? <a href="#/import">Vom Handy übernehmen ›</a></p>'}
+      ${editing ? '' : '<p class="small" style="margin-top:-4px">Schon im Handy gespeichert? <a href="#/import">Vom Handy übernehmen ›</a><br>Dir fällt gerade niemand ein? <a href="#/wer">Wer fällt dir ein? ›</a></p>'}
       <form id="kform" class="card" novalidate>
         <label class="field" for="f-name">Name *</label>
         <input type="text" id="f-name" name="name" maxlength="80" value="${esc(F.name)}" placeholder="so, wie du den Kontakt nennst, z. B. „Irene vom Yoga“" required>
@@ -570,6 +570,65 @@
     IMP = null;
     toast(n === 1 ? '1 Kontakt übernommen' : `${n} Kontakte übernommen`);
     go('#/kontakte?f=neu');
+  }
+
+
+  // ---------- D3: Gedächtnisstütze „Wer fällt dir ein?“ (Tanja 22.11.2026, Webinar Küffner) ----------
+  // Nur, was die Person selbst eintippt. Nichts aus dem Netz, nichts aus Social Media.
+  let WER_HINWEIS = false;
+  const WER_ZIEL = 10;
+  const werZaehler = () => `${Math.min(S.kontakte.length, WER_ZIEL)} von ${WER_ZIEL} eingetragen`;
+  function viewWer() {
+    return `
+      <a class="back" href="#/kontakte">← Kontakte</a>
+      <h1>Wer fällt dir ein?</h1>
+      <p>Hier geht es um Menschen, die du kennst und magst. Zum Eintragen reicht ein Vorname, alles andere ergänzt du später.</p>
+      <p class="small"><b id="wer-count">${werZaehler()}</b></p>
+      ${C.WER.map((b) => `<div class="card wer-box">
+        <h2>${b.icon} ${esc(b.name)}</h2>
+        <ul class="wer-fragen">${b.fragen.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>
+        <form class="wer-form" data-feld="${b.key}" novalidate>
+          <label class="sr-only" for="wer-${b.key}">Vorname (${esc(b.name)})</label>
+          <input type="text" id="wer-${b.key}" maxlength="80" placeholder="Vorname" autocomplete="off">
+          <button class="btn small" type="submit">Eintragen</button>
+        </form>
+        <ul class="wer-neu" id="wer-neu-${b.key}"></ul>
+      </div>`).join('')}
+      ${hinweisOffen() ? hinweisHtml(WER_HINWEIS, 'id="wer-hinweis"') : '<p class="small muted">Nur Menschen, die du persönlich kennst. Löschen kannst du jeden Kontakt jederzeit.</p>'}
+      <div class="actions"><a class="btn secondary" href="#/kontakte?f=neu">Zu deinen Kontakten</a></div>`;
+  }
+  function afterWer() {
+    const h = document.getElementById('wer-hinweis');
+    if (h) h.addEventListener('change', () => { WER_HINWEIS = h.checked; });
+    document.querySelectorAll('form.wer-form').forEach((form) => form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const b = C.WER.find((x) => x.key === form.dataset.feld);
+      const inp = form.querySelector('input');
+      const btn = form.querySelector('button');
+      const name = inp.value.trim();
+      if (!b || !name || working) return;
+      if (S.kontakte.some((k) => k.name.trim().toLowerCase() === name.toLowerCase())) { toast(`${name} ist schon in deiner Liste.`); return; }
+      if (hinweisOffen()) {
+        if (!WER_HINWEIS) { toast('Bitte bestätige einmal den Hinweis unten.'); return; }
+        working = true; btn.disabled = true;
+        const ok = await hinweisBestaetigen();
+        working = false; btn.disabled = false;
+        if (!ok) return;
+      }
+      working = true; btn.disabled = true;
+      try {
+        const k = await addKontakt({ name, herkunft: b.herkunft });
+        if (!k) return;
+        inp.value = '';
+        const li = document.createElement('li');
+        li.textContent = `✓ ${k.name}`;
+        document.getElementById(`wer-neu-${b.key}`).appendChild(li);
+        document.getElementById('wer-count').textContent = werZaehler();
+        const hBox = document.getElementById('wer-hinweis');
+        if (hBox) hBox.closest('.card').outerHTML = '<p class="small muted">Nur Menschen, die du persönlich kennst. Löschen kannst du jeden Kontakt jederzeit.</p>';
+        toast(`${k.name} eingetragen`);
+      } finally { working = false; btn.disabled = false; inp.focus(); }
+    }));
   }
 
   // ---------- Gespräch dokumentieren ----------
@@ -1406,4 +1465,5 @@
   T.views.sprachnotiz = { html: viewSprachnotiz, after: afterSprachnotiz, tab: 'heute', noKeep: true };
   T.views.entwurf = { html: viewEntwurf, after: afterEntwurf, tab: 'kontakte', noKeep: true };
   T.views.import = { html: viewImport, after: afterImport, tab: 'kontakte', noKeep: true };
+  T.views.wer = { html: viewWer, after: afterWer, tab: 'kontakte', noKeep: true };
 })();

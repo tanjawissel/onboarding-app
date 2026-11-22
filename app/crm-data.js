@@ -98,7 +98,14 @@ window.CRM_DATA = (function () {
   };
   const TYPE_ORDER = ['pfeil', 'funke', 'anker', 'kristall'];
 
-  const HERKUNFT = [['freundeskreis', 'Freundeskreis'], ['familie', 'Familie'], ['arbeit', 'Arbeit'], ['hobby', 'Hobby'], ['empfehlung', 'Empfehlung'], ['sonstiges', 'Sonstiges']];
+  const HERKUNFT = [['freundeskreis', 'Freundeskreis'], ['familie', 'Familie'], ['arbeit', 'Arbeit'], ['hobby', 'Hobby'], ['empfehlung', 'Empfehlung'], ['online', 'Online'], ['sonstiges', 'Sonstiges']]; // „Online“ seit 22.11.2026 (D3)
+  // D3 (Tanja 22.11.2026): Gedächtnisstütze „Wer fällt dir ein?“, je Bereich 3 Anstoß-Fragen und die vorbelegte Herkunft
+  const WER = [
+    { key: 'familie', icon: '👨‍👩‍👧', name: 'Familie und Freunde', herkunft: 'freundeskreis', fragen: ['Mit wem hast du zuletzt so richtig gelacht?', 'Wer aus deiner Familie freut sich über Neues?', 'Wen lädst du zu deinem Geburtstag ein?'] },
+    { key: 'arbeit', icon: '🧶', name: 'Arbeit und Hobby', herkunft: 'arbeit', fragen: ['Mit wem arbeitest du gern zusammen, heute oder früher?', 'Wen triffst du im Verein, beim Sport oder im Kurs?', 'Wen siehst du regelmäßig: beim Coiffeur, in der Nachbarschaft, auf dem Spielplatz?'] },
+    { key: 'online', icon: '📱', name: 'Social Media', herkunft: 'online', fragen: ['Mit wem schreibst du immer wieder auf Instagram, Facebook oder WhatsApp?', 'Wessen Beiträge gefallen dir?', 'Wer aus einer Online-Gruppe ist dir sympathisch?'] },
+    { key: 'neu', icon: '✨', name: 'Neu kennengelernt', herkunft: 'sonstiges', fragen: ['Wen hast du in den letzten Wochen kennengelernt?', 'Wen hat dir jemand vorgestellt?', 'Wer war neugierig, als du von deinen Patches erzählt hast?'] },
+  ];
   const KANAL = [['whatsapp', 'WhatsApp'], ['telegram', 'Telegram'], ['sms', 'SMS'], ['email', 'E-Mail'], ['telefon', 'Telefon'], ['persoenlich', 'persönlich']];
 
   // Beispielentwürfe für den Prototyp (ohne KI), in einem Beispiel-Wortstil „herzlich-direkt, Hey + Emoji, LG“.
@@ -239,6 +246,6 @@ window.CRM_DATA = (function () {
     ['lieblingswoerter', 'Lieblingswörter'], ['nie', 'Würde nie sagen'], ['sprache', 'Sprachnachricht vs. Text'],
   ];
 
-  return { STECKBRIEF_FIELDS, STATUS, ARTS, SCHRITTE, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE, FAVORITE_LINE, SIEBENER_INFO,
+  return { STECKBRIEF_FIELDS, STATUS, ARTS, SCHRITTE, VIDEOS, TYPES, TYPE_ORDER, HERKUNFT, WER, KANAL, DRAFTS, VIDEO_DRAFTS, BUSINESS_LINE, VIDEO_TEST_TEXT, EMPFEHLUNG_LINE, FAVORITE_LINE, SIEBENER_INFO,
     HANDBUCH: 'https://heyzine.com/flip-book/e2bfcd5caf.html' };
 })();

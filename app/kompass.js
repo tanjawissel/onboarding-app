@@ -41,7 +41,7 @@
       options: [['video', 'Zuschauen (Video)'], ['lesen', 'Lesen'], ['probieren', 'Einfach ausprobieren'], ['gemeinsam', 'Gemeinsam mit jemandem']] },
     { id: 'C5', key: 'start30', free: true, max: 300, text: 'Woran erkennst du nach 30 Tagen, dass dein Start gut war?',
       hint: 'Freiwillig. Das sieht dein Sponsor nur, wenn du den Bereich „Rahmen“ freigibst.',
-      placeholder: 'Zum Beispiel: Ich habe die ersten Gespräche geführt und weiß, wie es weitergeht …' },
+      placeholder: 'Zum Beispiel: Ich habe meine ersten 3 Kunden und 1 Partner …' }, // Beispiel Tanja 22.11.2026 (A3)
     { id: 'C6', key: 'haenger', free: true, max: 300, text: 'Was könnte dich ausbremsen, und wie soll dein Sponsor dich dann ansprechen?',
       hint: 'Freiwillig. Das sieht dein Sponsor nur, wenn du den Bereich „Rahmen“ freigibst.',
       placeholder: 'Zum Beispiel: Wenn ich mich eine Woche nicht melde, schreib mir bitte eine kurze Nachricht …' },

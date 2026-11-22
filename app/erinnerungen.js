@@ -40,7 +40,7 @@
   window.addEventListener('appinstalled', () => { installPrompt = null; melden(HOME); });
 
   // ---------- Speicher ----------
-  const leer = () => ({ einst: null, abos: [], meil: [], kompass: false, kontakte: 0, partner: 0, kalSeit: null, kalToken: null, endpoint: null, sponsorFrei: false });
+  const leer = () => ({ einst: null, abos: [], meil: [], kompass: false, kontakte: 0, angesprochen: 0, partner: 0, kalSeit: null, kalToken: null, endpoint: null, sponsorFrei: false });
   let E = leer();
   let anlTab = istAndroid ? 'android' : 'iphone';
   const uid = () => T.state.session.user.id;
@@ -61,15 +61,16 @@
       sb.from('meilensteine').select('art, titel').eq('owner_id', uid()),
       sb.from('kompass_auswertung').select('owner_id', { count: 'exact', head: true }),
       sb.from('kontakte').select('id', { count: 'exact', head: true }),
+      sb.from('kontakte').select('id', { count: 'exact', head: true }).neq('status', 'neu'),
       sb.rpc('meine_partner'),
       sb.rpc('kalender_abo_status'),
       sb.from('freigaben').select('meilensteine').maybeSingle(),
     ]);
     const bad = res.find((r) => r.error);
     if (bad) throw bad.error;
-    const [e, a, m, k, ko, p, kal, f] = res;
+    const [e, a, m, k, ko, an, p, kal, f] = res;
     E = Object.assign(leer(), {
-      einst: e.data, abos: a.data || [], meil: m.data || [], kompass: (k.count || 0) > 0, kontakte: ko.count || 0,
+      einst: e.data, abos: a.data || [], meil: m.data || [], kompass: (k.count || 0) > 0, kontakte: ko.count || 0, angesprochen: an.count || 0,
       partner: (p.data || []).length, kalSeit: kal.data || null, sponsorFrei: !!(f.data && f.data.meilensteine),
     });
     E.endpoint = await eigenesAbo();
@@ -81,15 +82,17 @@
   // Auf „Heute“ frisch zählen (Kompass, Kontakte), damit die ersten Schritte stimmen
   T.onRoute.push(async (r) => {
     if (r.name !== 'heute' || !T.state.session || !T.state.ready) return;
-    const [k, ko] = await Promise.all([
+    const [k, ko, an] = await Promise.all([
       sb.from('kompass_auswertung').select('owner_id', { count: 'exact', head: true }),
       sb.from('kontakte').select('id', { count: 'exact', head: true }),
+      sb.from('kontakte').select('id', { count: 'exact', head: true }).neq('status', 'neu'),
     ]);
-    const vorher = `${E.kompass}|${E.kontakte}`;
+    const vorher = `${E.kompass}|${E.kontakte}|${E.angesprochen}`;
     if (!k.error) E.kompass = (k.count || 0) > 0;
     if (!ko.error) E.kontakte = ko.count || 0;
+    if (!an.error) E.angesprochen = an.count || 0;
     automatisch();
-    if (vorher !== `${E.kompass}|${E.kontakte}` && T.route().name === 'heute') T.render();
+    if (vorher !== `${E.kompass}|${E.kontakte}|${E.angesprochen}` && T.route().name === 'heute') T.render();
   });
 
   // ---------- Meilensteine „Onboarding-Schritt“ (C10) ----------
@@ -97,6 +100,12 @@
   const EINGESTELLT = 'Erinnerungen eingestellt';
   const ACADEMY = 'Academy: Lektionen 1 bis 4 angesehen';
   const KONTAKTE3 = 'Erste 3 Kontakte eingetragen';
+  // A3 (Tanja 22.11.2026, Webinar Küffner): erste Schritte nach Zeitfenstern
+  const KONTAKTE10 = '10 Menschen eingetragen';
+  const ANGESPROCHEN3 = '3 Menschen angesprochen';
+  const DRITT = 'Erstes Gespräch zu dritt';
+  const ZIEL30 = 'Auf das 30-Tage-Ziel geschaut';
+  const SELBST = [ACADEMY, DRITT, ZIEL30];
   const hat = (art, titel) => E.meil.some((m) => m.art === art && (titel === undefined || m.titel === titel));
   const geschafft = (titel) => hat('onboarding_schritt', titel);
   const gemeldet = new Set();
@@ -111,16 +120,28 @@
   function automatisch() {
     if (standalone()) melden(HOME);
     if (E.kontakte >= 3) melden(KONTAKTE3);
+    if (E.kontakte >= 10) melden(KONTAKTE10);
+    if (E.angesprochen >= 3) melden(ANGESPROCHEN3);
   }
 
+  // Drei Abschnitte. Die Überschriften geben eine Richtung, keine Frist.
   const SCHRITTE = () => [
-    { text: 'Freiheits-Kompass machen', href: '#/kompass', done: E.kompass || hat('kompass_fertig') },
-    { text: 'Wortstil-Probe machen', href: '#/kompass', done: !!T.state.steckbrief || hat('wortstil_fertig') },
-    { text: 'App auf den Home-Bildschirm holen', href: '#/erinnerungen', done: geschafft(HOME) || standalone() },
-    { text: 'Erinnerungen einstellen', href: '#/erinnerungen', done: geschafft(EINGESTELLT) },
-    // Noch nicht freigeschaltet: der Pfeil führt ins Profil zum Knopf „Academy freischalten“
-    { text: 'Academy: Lektionen 1 bis 4 ansehen', href: T.state.profil?.academy_seit ? C.academyUrl : '#/profil', extern: !!T.state.profil?.academy_seit, selbst: true, done: geschafft(ACADEMY) },
-    { text: 'Deine ersten 3 Kontakte eintragen', href: '#/neu', done: geschafft(KONTAKTE3) || E.kontakte >= 3 },
+    { titel: 'Deine ersten 48 Stunden', schritte: [
+      { text: 'Freiheits-Kompass machen: dein Warum und dein Ziel für die ersten 30 Tage', href: '#/kompass', done: E.kompass || hat('kompass_fertig') },
+      { text: 'Wortstil-Probe machen', href: '#/kompass', done: !!T.state.steckbrief || hat('wortstil_fertig') },
+      { text: 'App auf den Home-Bildschirm holen', href: '#/erinnerungen', done: geschafft(HOME) || standalone() },
+    ] },
+    { titel: 'Deine erste Woche', schritte: [
+      { text: '10 Menschen eintragen. „Wer fällt dir ein?“ hilft dir dabei', href: '#/wer', done: geschafft(KONTAKTE10) || E.kontakte >= 10 },
+      { text: '3 Menschen ansprechen', href: '#/kontakte?f=neu', done: geschafft(ANGESPROCHEN3) || E.angesprochen >= 3 },
+      { text: 'Erinnerungen einstellen', href: '#/erinnerungen', done: geschafft(EINGESTELLT) },
+      // Noch nicht freigeschaltet: der Pfeil führt ins Profil zum Knopf „Academy freischalten“
+      { text: 'Academy: Lektionen 1 bis 4 ansehen', titel: ACADEMY, href: T.state.profil?.academy_seit ? C.academyUrl : '#/profil', extern: !!T.state.profil?.academy_seit, selbst: true, done: geschafft(ACADEMY) },
+    ] },
+    { titel: 'Dein erster Monat', schritte: [
+      { text: 'Erstes Gespräch zu dritt mit jemandem, der sich fürs Business interessiert', titel: DRITT, selbst: true, done: geschafft(DRITT) },
+      { text: 'Auf dein 30-Tage-Ziel schauen: Was ist dir gelungen?', titel: ZIEL30, href: '#/kompass', selbst: true, done: geschafft(ZIEL30) },
+    ] },
   ];
 
   // ---------- C1: Anleitung „Zum Home-Bildschirm“ ----------
@@ -169,17 +190,23 @@
     </section>`;
   }
   function karteSchritte() {
-    const s = SCHRITTE();
-    const n = s.filter((x) => x.done).length;
-    if (n === s.length) return '';
-    return `<section class="card">
-      <div class="card-head"><h2>Deine ersten Schritte</h2><span class="counter">${n} von ${s.length}</span></div>
-      <ul class="prio">${s.map((x) => `
+    const abschnitte = SCHRITTE();
+    const alle = abschnitte.flatMap((a) => a.schritte);
+    const n = alle.filter((x) => x.done).length;
+    if (n === alle.length) return '';
+    const zeile = (x) => `
         <li class="${x.done ? 'done' : ''}">
-          <input type="checkbox" ${x.done ? 'checked' : ''} ${x.selbst && !x.done ? 'data-act="er-academy"' : 'disabled'} aria-label="${esc(x.text)}${x.done ? ' erledigt' : ''}">
+          <input type="checkbox" ${x.done ? 'checked' : ''} ${x.selbst && !x.done ? `data-act="er-selbst" data-titel="${esc(x.titel)}"` : 'disabled'} aria-label="${esc(x.text)}${x.done ? ' erledigt' : ''}">
           <span class="p-text">${esc(x.text)}${x.selbst && !x.done ? ' <span class="small muted">(selbst abhaken)</span>' : ''}</span>
-          ${x.done ? '' : `<a class="go" href="${esc(x.href)}" ${x.extern ? 'target="_blank" rel="noopener"' : ''} aria-label="${esc(x.text)}">›</a>`}
-        </li>`).join('')}</ul>
+          ${x.done || !x.href ? '' : `<a class="go" href="${esc(x.href)}" ${x.extern ? 'target="_blank" rel="noopener"' : ''} aria-label="${esc(x.text)}">›</a>`}
+        </li>`;
+    return `<section class="card">
+      <div class="card-head"><h2>Deine ersten Schritte</h2><span class="counter">${n} von ${alle.length}</span></div>
+      ${abschnitte.map((a) => {
+        const fertig = a.schritte.every((x) => x.done);
+        return `<h3 class="schritt-zeit">${esc(a.titel)}${fertig ? ' <span class="small muted">✓ geschafft</span>' : ''}</h3>
+      ${fertig ? '' : `<ul class="prio">${a.schritte.map(zeile).join('')}</ul>`}`;
+      }).join('')}
     </section>`;
   }
   T.heuteKarten = (T.heuteKarten || []).concat([karteWillkommen, karteHome, karteSchritte]);
@@ -425,7 +452,7 @@
     if (act === 'er-home-erledigt') { await melden(HOME); return T.render(); }
     if (act === 'er-home-spaeter') { ls.set('tw-home-spaeter', '1'); return T.render(); }
     if (act === 'er-willkommen') { ls.set('tw-willkommen-app', '1'); if (b.tagName !== 'A') T.render(); return; }
-    if (act === 'er-academy') { ev.preventDefault(); await melden(ACADEMY); return T.render(); }
+    if (act === 'er-selbst' && SELBST.includes(b.dataset.titel)) { ev.preventDefault(); await melden(b.dataset.titel); return T.render(); }
     if (act === 'er-anleitung') { iphoneHinweis(); return; }
     if (act === 'er-push-an') { if (pushMoeglich()) einwilligungDialog(); else iphoneHinweis(); return; }
     if (act === 'er-ok') { const j = document.querySelector('[data-act="er-push-ja"]'); if (j) j.disabled = !b.checked; return; }
