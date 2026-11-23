@@ -317,6 +317,33 @@
     return k.data.length;
   }
 
+  // Zwei Videos zur App für neue Partner (Fassung 2 ohne Kalender, abgenommen 23.11.2026).
+  // Dateien: Videos/Tanja-Wissel_Team-App_Teaser_9x16_klein.mp4 und …_Anleitung_klein.mp4
+  const TEAM_VIDEOS = [
+    { titel: 'Deine Team-App kurz vorgestellt', dauer: '1:24', url: 'https://app.tanjawissel.ch/videos/team-app-teaser.mp4' },
+    { titel: 'So nutzt du die Team-App', dauer: '5:37', url: 'https://app.tanjawissel.ch/videos/team-app-anleitung.mp4' },
+  ];
+  const teamVideoText = () => 'Zwei kurze Videos zu unserer Team-App:\n'
+    + TEAM_VIDEOS.map((v) => `▶️ ${v.titel} (${v.dauer}): ${v.url}`).join('\n');
+  function teamVideosCard() {
+    const text = teamVideoText();
+    return `<div class="card">
+        <h2>Videos zur App für neue Partner</h2>
+        <p class="muted small">Schick sie zusammen mit der Einladung. So sieht dein neuer Partner gleich, was die App kann und wie sie funktioniert.</p>
+        ${TEAM_VIDEOS.map((v) => `<div class="video-item" style="margin-top:8px">
+          <div><b>${esc(v.titel)}</b> <span class="small muted">· ${esc(v.dauer)}</span></div>
+          <div class="actions" style="margin-top:6px">
+            <a class="btn secondary small" href="${esc(v.url)}" target="_blank" rel="noopener">Ansehen</a>
+            <button class="btn secondary small" data-act="copy-video" data-text="${esc(v.url)}">📋 Link kopieren</button>
+          </div></div>`).join('')}
+        <div class="actions" style="margin-top:10px">
+          <button class="btn small" data-act="copy-video" data-text="${esc(text)}">Beide Links kopieren</button>
+          ${navigator.share ? `<button class="btn secondary small" data-act="share-videos" data-text="${esc(text)}">Teilen</button>` : ''}
+          <a class="btn olive small" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>`;
+  }
+
   async function viewTeam() {
     const myId = state.session.user.id;
     const [partner, codes, ansicht, coachees] = await Promise.all([
@@ -367,6 +394,7 @@
             <div class="actions"><button class="btn" ${state.busy ? 'disabled' : ''}>Einladungscode erzeugen</button></div>
           </form>`}
       </div>
+      ${teamVideosCard()}
       <div class="card">
         <h2>Meine Partner</h2>
         ${partner.error || ansicht.error ? '<p class="notice warm">Die Partnerliste konnte nicht geladen werden. Bitte lade die Seite neu.</p>' : ''}
@@ -688,6 +716,8 @@
       });
     }
     if (act === 'copy-invite') { copyText(b.dataset.text, 'Einladung kopiert'); b.textContent = 'Kopiert ✓'; return; }
+    if (act === 'copy-video') { copyText(b.dataset.text, 'Kopiert. Jetzt selbst verschicken.'); b.textContent = 'Kopiert ✓'; return; }
+    if (act === 'share-videos') { navigator.share({ title: 'Videos zur Team-App', text: b.dataset.text }).catch(() => {}); return; }
     if (act === 'copy-test') { copyText(b.dataset.text, 'Test-Link kopiert'); b.textContent = 'Kopiert ✓'; return; }
     if (act === 'widerrufen') {
       if (!window.confirm('Diesen Einladungscode wirklich widerrufen?')) return;
