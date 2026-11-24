@@ -16,12 +16,15 @@
   <meta name="apple-mobile-web-app-title" content="Tanja Wissel">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="fonts/fonts.css">
-  <link rel="stylesheet" href="app/styles.css?v=11">
+  <link rel="stylesheet" href="app/styles.css?v=12">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">TANJA WISSEL <span>· App</span></div>
-    <span class="proto-badge">Testphase</span>
+    <div class="topbar-rechts">
+      <span class="proto-badge">Testphase</span>
+      <a class="glocke" id="glocke" href="#/nachrichten" aria-label="Nachrichten" hidden><span aria-hidden="true">🔔</span><span class="glocke-zahl" id="glocke-zahl" hidden>0</span></a>
+    </div>
   </header>
   <main class="wrap" id="app" aria-live="polite">
     <p class="muted">Einen Moment …</p>
@@ -45,5 +48,6 @@
   <script src="app/kompass-data.js?v=7"></script>
   <script src="app/kompass.js?v=8"></script>
   <script src="app/erinnerungen.js?v=6"></script>
+  <script src="app/nachrichten.js?v=1"></script>
 </body>
 </html>

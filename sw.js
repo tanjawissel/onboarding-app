@@ -40,7 +40,7 @@ self.addEventListener('push', (event) => {
     icon: '/icons/icon-192.png',
     badge: '/icons/badge-96.png',
     tag: d.tag || 'tw',
-    data: { url: d.url || '/#/heute' },
+    data: { url: d.url || '/#/heute', id: d.id || '' }, // id = Eintrag unter „Nachrichten“
     lang: 'de',
   }));
 });
@@ -49,6 +49,9 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const ziel = new URL(event.notification.data && event.notification.data.url || '/#/heute', self.location.origin);
   if (ziel.origin !== self.location.origin) return;
+  // Eintrag unter „Nachrichten“ beim Öffnen als gelesen markieren (die App liest ?n= und nimmt es wieder raus)
+  const id = event.notification.data && event.notification.data.id;
+  if (id && /^[0-9a-f-]{36}$/i.test(id)) ziel.hash = (ziel.hash || '#/heute') + (ziel.hash.includes('?') ? '&' : '?') + 'n=' + id;
   event.waitUntil((async () => {
     const offen = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of offen) {

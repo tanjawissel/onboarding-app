@@ -410,3 +410,20 @@ button.back { background: none; border: 0; padding: 0; font: inherit; font-weigh
 .wer-form input { flex: 1; min-width: 0; margin: 0; }
 .wer-neu { list-style: none; padding: 0; margin: 8px 0 0; color: var(--muted, #666); font-size: 0.9rem; }
 .wer-neu:empty { display: none; }
+
+/* Nachrichten (Glocke oben rechts + Liste, 24.11.2026) */
+.topbar-rechts { display: flex; align-items: center; gap: 12px; }
+.glocke { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--sand); text-decoration: none; font-size: 1.25rem; line-height: 1; }
+.glocke:hover, .glocke.active { background: rgba(232,192,122,.15); }
+.glocke:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+.glocke-zahl { position: absolute; top: 2px; right: 0; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 99px; background: var(--terra); color: #fff; font: 700 .72rem/19px var(--sans); text-align: center; }
+.nachrichten { list-style: none; padding: 0; margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.nachricht + .nachricht { border-top: 1px solid var(--line); }
+.nachricht a { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 14px 16px; color: var(--ink); text-decoration: none; }
+.nachricht a:hover { background: var(--creme); }
+.n-kopf { grid-column: 1; font-size: .82rem; color: var(--ink-muted); display: flex; align-items: center; gap: 7px; }
+.n-text { grid-column: 1; }
+.n-pfeil { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--ink-muted); font-size: 1.4rem; }
+.nachricht.neu .n-text { font-weight: 700; }
+.nachricht.neu .n-kopf { color: var(--terra-deep); font-weight: 700; }
+.n-punkt { width: 9px; height: 9px; border-radius: 50%; background: var(--terra); flex: 0 0 auto; }
