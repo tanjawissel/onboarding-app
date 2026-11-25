@@ -67,6 +67,12 @@ window.CRM_DATA = (function () {
       worum: 'Kleine Patches für die Haut und der kurze Test (anonym, ca. 5 Min.): herausfinden, welche passen könnten',
       // Test-Link nur auf Anfrage (Tanja 09.11.2026): kein automatischer Anhang mehr (früher test: true)
       fuer: 'für Kundenkontakte jeden Alters; den Test-Link schickst du erst, wenn der Kontakt danach fragt' },
+    // Fassung 8 als 3D-Animationsfilm „Deine Stärke hat ihren Platz“, Name „Vision“ (Tanja 25.11.2026: „als Visionsvideo in der App zur Verfügung stellen“).
+    // Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-8-3D_9x16.mp4, Handy-Fassung 720p. F4 und F5 bleiben vorerst in der Liste.
+    { key: 'vision8',     titel: 'Visions-Video „Vision“', dauer: '2,5 Min.',
+      url: 'https://app.tanjawissel.ch/videos/vision.mp4',
+      worum: 'Animationsfilm: Wo stehst du gerade? Vier Arten, wie Menschen etwas bewegen, und die Vision, eine neue Art der Lösung für den Alltag in die Welt zu bringen',
+      fuer: 'für alle Altersgruppen und Lebenslagen; jede Art findet darin ihren Platz' },
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
     { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
       url: 'https://app.tanjawissel.ch/videos/naechstes-kapitel.mp4',
