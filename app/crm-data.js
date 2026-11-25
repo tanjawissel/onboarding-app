@@ -73,16 +73,18 @@ window.CRM_DATA = (function () {
       url: 'https://app.tanjawissel.ch/videos/vision.mp4',
       worum: 'Animationsfilm: Wo stehst du gerade? Vier Arten, wie Menschen etwas bewegen, und die Vision, eine neue Art der Lösung für den Alltag in die Welt zu bringen',
       fuer: 'für alle Altersgruppen und Lebenslagen; jede Art findet darin ihren Platz' },
+    // Tanja 25.11.2026: „Blende die anderen Visionsvideos in der App aus“ → F4 und F5 ausgeblendet, „Vision“ (F8) ersetzt sie.
+    // Die Dateien bleiben unter /videos liegen, damit schon verschickte Links weiter gehen. Zum Zurückholen die Zeilen wieder einkommentieren.
     // Fassung 4 „Der Zug ins nächste Kapitel“, abgenommen 09.11.2026, neu ohne Verneinungen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-4_9x16_klein.mp4
-    { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
-      url: 'https://app.tanjawissel.ch/videos/naechstes-kapitel.mp4',
-      worum: 'Die Geschäftsidee und die Vision: etwas Eigenes aufbauen, rund ums eigene Leben',
-      fuer: 'für Menschen mit Lebenserfahrung, die etwas Eigenes aufbauen und selbstbestimmt für sich sorgen wollen' },
+    // { key: 'vision4',     titel: 'Visions-Video „Nächstes Kapitel“', dauer: '1,5 Min.',
+    //   url: 'https://app.tanjawissel.ch/videos/naechstes-kapitel.mp4',
+    //   worum: 'Die Geschäftsidee und die Vision: etwas Eigenes aufbauen, rund ums eigene Leben',
+    //   fuer: 'für Menschen mit Lebenserfahrung, die etwas Eigenes aufbauen und selbstbestimmt für sich sorgen wollen' },
     // Fassung 5 „Etwas Besseres aufbauen“, abgenommen 09.11.2026. Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-5_9x16_klein.mp4
-    { key: 'vision5',     titel: 'Visions-Video „Etwas Besseres aufbauen“', dauer: '1,5 Min.',
-      url: 'https://app.tanjawissel.ch/videos/etwas-besseres-aufbauen.mp4',
-      worum: 'Neben Job, Studium oder Familie etwas Eigenes starten und dabei wachsen',
-      fuer: 'für Jüngere, die neben Job, Studium oder Familie etwas Eigenes starten wollen' },
+    // { key: 'vision5',     titel: 'Visions-Video „Etwas Besseres aufbauen“', dauer: '1,5 Min.',
+    //   url: 'https://app.tanjawissel.ch/videos/etwas-besseres-aufbauen.mp4',
+    //   worum: 'Neben Job, Studium oder Familie etwas Eigenes starten und dabei wachsen',
+    //   fuer: 'für Jüngere, die neben Job, Studium oder Familie etwas Eigenes starten wollen' },
     // Fassung 3 „Ein guter Moment zum Einsteigen“, abgenommen 07.11.2026. Gesprächsbaustein V1 (Tanja 09.11.2026): Fassung 3 für den Kundenweg.
     // Tanja 09.11.2026: „erstmal von der Liste entfernen“. Zum Zurückholen die Zeile wieder einkommentieren.
     // Datei: Videos/Tanja-Wissel_Visions-Video_Fassung-3_9x16_klein.mp4
